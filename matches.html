@@ -182,6 +182,13 @@ const approvedPlayers = matchPlayers.filter(
     player => player.status === 'approved'
 );
 
+console.log('APPROVED PLAYERS:', approvedPlayers);
+
+const pendingPlayers = matchPlayers.filter(
+    player => player.status === 'pending'
+);
+                
+
 const pendingPlayers = matchPlayers.filter(
     player => player.status === 'pending'
 );
