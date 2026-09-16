@@ -185,196 +185,581 @@
     </div>
 
     <script type="module">
-        import { Auth } from '../js/auth.js';
-        import { MatchService } from '../js/services/match-service.js';
-        import { RequestService } from '../js/services/request-service.js';
-        import { UI } from '../js/ui.js';
+    import { Auth } from '../js/auth.js';
+    import { MatchService } from '../js/services/match-service.js';
+    import { RequestService } from '../js/services/request-service.js';
+    import { UI } from '../js/ui.js';
 
-        // Initialize auth
-        Auth.init();
+    Auth.init();
 
-        let allMatches = [];
+    let allMatches = [];
 
-        // Load matches
-        async function loadMatches() {
-            try {
-                await Auth.requireAdmin();
-                
-                UI.showLoading('matches-grid', 'جاري تحميل المباريات...');
-                
-                allMatches = await MatchService.getAllMatches();
-                await renderMatches();
-                
-            } catch (error) {
-                console.error('Error loading matches:', error);
-                UI.showError('matches-grid', 'حدث خطأ أثناء تحميل المباريات');
-            }
-        }
+    // =========================
+    // Load Matches
+    // =========================
+    async function loadMatches() {
+        try {
+            const isAdmin = await Auth.requireAdmin();
 
-        // Render matches
-        async function renderMatches() {
-            const grid = document.getElementById('matches-grid');
-            const emptyState = document.getElementById('empty-state');
-
-            if (allMatches.length === 0) {
-                grid.innerHTML = '';
-                emptyState.classList.remove('hidden');
+            if (!isAdmin) {
                 return;
             }
 
-            emptyState.classList.add('hidden');
-            
-            // Get requests for each match
-            const matchesWithStats = await Promise.all(allMatches.map(async match => {
-                const requests = await RequestService.getMatchRequests(match.id);
-                const approvedCount = requests.filter(r => r.status === 'approved').length;
-                const pendingCount = requests.filter(r => r.status === 'pending').length;
-                
-                return {
-                    ...match,
-                    approved_players: approvedCount,
-                    pending_players: pendingCount
-                };
-            }));
+            UI.showLoading(
+                'matches-grid',
+                'جاري تحميل المباريات...'
+            );
 
-            grid.innerHTML = matchesWithStats.map(match => {
-                const costPerPlayer = MatchService.calculatePlayerShare(match.total_cost, match.approved_players);
-                const isFull = match.approved_players >= match.max_players;
+            allMatches = await MatchService.getAllMatches();
 
-                return `
-                <div class="glass-panel rounded-3xl p-6 border border-dark-border hover:border-brand-500/40 transition-all duration-300 flex flex-col justify-between group card-hover">
+            await renderMatches();
+
+        } catch (error) {
+            console.error('Error loading matches:', error);
+
+            UI.showError(
+                'matches-grid',
+                'حدث خطأ أثناء تحميل المباريات'
+            );
+        }
+    }
+
+    // =========================
+    // Render Matches
+    // =========================
+    async function renderMatches() {
+        const grid = document.getElementById('matches-grid');
+        const emptyState = document.getElementById('empty-state');
+
+        if (!allMatches || allMatches.length === 0) {
+            grid.innerHTML = '';
+            emptyState.classList.remove('hidden');
+            return;
+        }
+
+        emptyState.classList.add('hidden');
+
+        const matchesWithStats = await Promise.all(
+            allMatches.map(async (match) => {
+                try {
+                    const requests =
+                        await RequestService.getMatchRequests(match.id);
+
+                    const approvedCount = requests.filter(
+                        r => r.status === 'approved'
+                    ).length;
+
+                    const pendingCount = requests.filter(
+                        r => r.status === 'pending'
+                    ).length;
+
+                    return {
+                        ...match,
+                        approved_players: approvedCount,
+                        pending_players: pendingCount
+                    };
+
+                } catch (error) {
+                    console.error(
+                        `Error loading requests for match ${match.id}:`,
+                        error
+                    );
+
+                    return {
+                        ...match,
+                        approved_players: 0,
+                        pending_players: 0
+                    };
+                }
+            })
+        );
+
+        grid.innerHTML = matchesWithStats.map(match => {
+
+            const approvedPlayers =
+                Number(match.approved_players || 0);
+
+            const maxPlayers =
+                Number(match.max_players || 0);
+
+            const totalCost =
+                Number(match.total_cost || 0);
+
+            const costPerPlayer =
+                MatchService.calculatePlayerShare(
+                    totalCost,
+                    approvedPlayers
+                );
+
+            const isFull =
+                approvedPlayers >= maxPlayers;
+
+            return `
+                <div
+                    class="glass-panel rounded-3xl p-6 border border-dark-border hover:border-brand-500/40 transition-all duration-300 flex flex-col justify-between group card-hover"
+                >
+
                     <div>
-                        <!-- Card Header -->
+
+                        <!-- Header -->
                         <div class="flex items-start justify-between gap-2 mb-3">
-                            <span class="bg-brand-500/10 text-brand-500 border border-brand-500/30 text-xs px-3 py-1 rounded-full font-bold">
-                                <i class="fa-solid fa-shield-halved ml-1"></i> ${match.pitch_name}
+
+                            <span
+                                class="bg-brand-500/10 text-brand-500 border border-brand-500/30 text-xs px-3 py-1 rounded-full font-bold"
+                            >
+                                <i class="fa-solid fa-shield-halved ml-1"></i>
+                                ${escapeHtml(match.pitch_name)}
                             </span>
-                            <span class="text-xs px-2.5 py-1 rounded-lg font-bold ${isFull ? 'bg-red-500/10 text-red-400 border border-red-500/30' : 'bg-dark-hover text-gray-300 border border-dark-border'}">
-                                ${match.approved_players} / ${match.max_players} لاعبين
+
+                            <span
+                                class="text-xs px-2.5 py-1 rounded-lg font-bold
+                                ${
+                                    isFull
+                                        ? 'bg-red-500/10 text-red-400 border border-red-500/30'
+                                        : 'bg-dark-hover text-gray-300 border border-dark-border'
+                                }"
+                            >
+                                ${approvedPlayers} / ${maxPlayers} لاعبين
                             </span>
+
                         </div>
 
-                        <!-- Match Title -->
-                        <h3 class="text-xl font-black text-white group-hover:text-brand-500 transition mb-4">${match.title}</h3>
+                        <!-- Title -->
+                        <h3
+                            class="text-xl font-black text-white group-hover:text-brand-500 transition mb-4"
+                        >
+                            ${escapeHtml(match.title)}
+                        </h3>
 
-                        <!-- Details Grid -->
+                        <!-- Details -->
                         <div class="space-y-2 mb-6 text-xs text-gray-300">
+
                             <div class="flex items-center gap-2">
                                 <i class="fa-regular fa-calendar text-brand-500 w-4"></i>
-                                <span>التاريخ: <strong class="text-white">${UI.formatDate(match.match_date)}</strong></span>
+
+                                <span>
+                                    التاريخ:
+                                    <strong class="text-white">
+                                        ${UI.formatDate(match.match_date)}
+                                    </strong>
+                                </span>
                             </div>
+
                             <div class="flex items-center gap-2">
                                 <i class="fa-regular fa-clock text-brand-500 w-4"></i>
-                                <span>التوقيت: <strong class="text-white">${UI.formatTime(match.start_time)} - ${UI.formatTime(match.end_time)}</strong></span>
+
+                                <span>
+                                    التوقيت:
+                                    <strong class="text-white">
+                                        ${UI.formatTime(match.start_time)}
+                                        -
+                                        ${UI.formatTime(match.end_time)}
+                                    </strong>
+                                </span>
                             </div>
+
                             <div class="flex items-center gap-2">
                                 <i class="fa-solid fa-money-bill-wave text-brand-500 w-4"></i>
-                                <span>التكلفة الإجمالية: <strong class="text-white">${match.total_cost} ج.م</strong></span>
+
+                                <span>
+                                    التكلفة الإجمالية:
+                                    <strong class="text-white">
+                                        ${totalCost.toFixed(2)} ج.م
+                                    </strong>
+                                </span>
                             </div>
+
+                            ${
+                                match.notes
+                                    ? `
+                                        <div class="flex items-start gap-2">
+                                            <i class="fa-solid fa-note-sticky text-brand-500 w-4 mt-0.5"></i>
+
+                                            <span>
+                                                ملاحظات:
+                                                <strong class="text-white">
+                                                    ${escapeHtml(match.notes)}
+                                                </strong>
+                                            </span>
+                                        </div>
+                                    `
+                                    : ''
+                            }
+
                         </div>
 
                         <!-- Stats -->
-                        <div class="bg-dark-base p-4 rounded-2xl border border-dark-border mb-6">
-                            <div class="flex items-center justify-between text-xs mb-1">
-                                <span class="text-gray-400">حصة اللاعب الحالية:</span>
-                                <span class="text-brand-neon font-black">${match.approved_players > 0 ? 'مقسمة على ' + match.approved_players : 'في انتظار أول لاعب'}</span>
+                        <div
+                            class="bg-dark-base p-4 rounded-2xl border border-dark-border mb-6"
+                        >
+
+                            <div
+                                class="flex items-center justify-between text-xs mb-1"
+                            >
+
+                                <span class="text-gray-400">
+                                    حصة اللاعب الحالية:
+                                </span>
+
+                                <span class="text-brand-neon font-black">
+                                    ${
+                                        approvedPlayers > 0
+                                            ? `مقسمة على ${approvedPlayers}`
+                                            : 'في انتظار أول لاعب'
+                                    }
+                                </span>
+
                             </div>
+
                             <div class="flex items-baseline gap-1">
-                                <span class="text-2xl font-black text-white">${costPerPlayer}</span>
-                                <span class="text-xs text-gray-400 font-bold">جنيه / لاعب</span>
+
+                                <span class="text-2xl font-black text-white">
+                                    ${costPerPlayer}
+                                </span>
+
+                                <span class="text-xs text-gray-400 font-bold">
+                                    جنيه / لاعب
+                                </span>
+
                             </div>
+
                         </div>
+
                     </div>
 
-                    <!-- Action Buttons -->
+                    <!-- Actions -->
                     <div class="pt-2 border-t border-dark-border/50">
+
                         <div class="flex items-center gap-2">
-                            <a href="requests.html?match_id=${match.id}" class="flex-1 bg-dark-card hover:bg-dark-hover border border-brand-500/50 text-brand-500 hover:text-white font-bold py-2.5 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2">
+
+                            <a
+                                href="requests.html?match_id=${encodeURIComponent(match.id)}"
+                                class="flex-1 bg-dark-card hover:bg-dark-hover border border-brand-500/50 text-brand-500 hover:text-white font-bold py-2.5 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2"
+                            >
                                 <i class="fa-solid fa-user-gear"></i>
-                                <span>إدارة الطلبات (${match.pending_players})</span>
+
+                                <span>
+                                    إدارة الطلبات
+                                    (${match.pending_players})
+                                </span>
                             </a>
-                            <button data-match-id="${match.id}" class="delete-match-btn bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-400 px-3 py-2.5 rounded-xl text-sm transition">
+
+                            <button
+                                data-match-id="${match.id}"
+                                class="delete-match-btn bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-400 px-3 py-2.5 rounded-xl text-sm transition"
+                                title="حذف المباراة"
+                            >
                                 <i class="fa-solid fa-trash"></i>
                             </button>
-                        </div>
-                    </div>
-                </div>
-                `;
-            }).join('');
-            
-            setupDeleteButtons();
-        }
 
-        // Create match
-        document.getElementById('create-match-form').addEventListener('submit', async (e) => {
+                        </div>
+
+                    </div>
+
+                </div>
+            `;
+        }).join('');
+
+        setupDeleteButtons();
+    }
+
+    // =========================
+    // Create Match
+    // =========================
+    document
+        .getElementById('create-match-form')
+        .addEventListener('submit', async (e) => {
+
             e.preventDefault();
-            
-            const matchData = {
-                title: document.getElementById('match-title').value,
-                pitch_name: document.getElementById('pitch-name').value,
-                match_date: document.getElementById('match-date').value,
-                start_time: document.getElementById('start-time').value,
-                end_time: document.getElementById('end-time').value,
-                total_cost: parseFloat(document.getElementById('total-cost').value),
-                max_players: parseInt(document.getElementById('max-players').value),
-                notes: document.getElementById('notes').value
-            };
+
+            const submitButton =
+                e.target.querySelector('button[type="submit"]');
+
+            const originalText =
+                submitButton.innerHTML;
 
             try {
+
+                submitButton.disabled = true;
+
+                submitButton.innerHTML = `
+                    <i class="fa-solid fa-spinner fa-spin ml-1"></i>
+                    جاري الحفظ...
+                `;
+
+                const matchData = {
+                    title: document
+                        .getElementById('match-title')
+                        .value
+                        .trim(),
+
+                    pitch_name: document
+                        .getElementById('pitch-name')
+                        .value
+                        .trim(),
+
+                    match_date:
+                        document.getElementById('match-date').value,
+
+                    start_time:
+                        document.getElementById('start-time').value,
+
+                    end_time:
+                        document.getElementById('end-time').value,
+
+                    total_cost:
+                        Number(
+                            document.getElementById('total-cost').value
+                        ),
+
+                    max_players:
+                        Number(
+                            document.getElementById('max-players').value
+                        ),
+
+                    notes:
+                        document
+                            .getElementById('notes')
+                            .value
+                            .trim()
+                };
+
+                // Basic validation
+                if (!matchData.title) {
+                    throw new Error('اكتب عنوان المباراة');
+                }
+
+                if (!matchData.pitch_name) {
+                    throw new Error('اكتب اسم الملعب');
+                }
+
+                if (!matchData.match_date) {
+                    throw new Error('اختار تاريخ المباراة');
+                }
+
+                if (!matchData.start_time || !matchData.end_time) {
+                    throw new Error('حدد وقت البداية والنهاية');
+                }
+
+                if (matchData.end_time <= matchData.start_time) {
+                    throw new Error(
+                        'وقت النهاية يجب أن يكون بعد وقت البداية'
+                    );
+                }
+
+                if (
+                    !Number.isFinite(matchData.total_cost) ||
+                    matchData.total_cost <= 0
+                ) {
+                    throw new Error(
+                        'اكتب تكلفة صحيحة للمباراة'
+                    );
+                }
+
+                if (
+                    !Number.isInteger(matchData.max_players) ||
+                    matchData.max_players < 2 ||
+                    matchData.max_players > 22
+                ) {
+                    throw new Error(
+                        'عدد اللاعبين يجب أن يكون بين 2 و22'
+                    );
+                }
+
                 await MatchService.createMatch(matchData);
-                UI.showToast('تم إنشاء المباراة بنجاح', 'success');
+
+                UI.showToast(
+                    'تم إنشاء المباراة ونشرها بنجاح',
+                    'success'
+                );
+
                 closeModal();
+
                 await loadMatches();
+
             } catch (error) {
-                console.error('Error creating match:', error);
-                UI.showToast('حدث خطأ أثناء إنشاء المباراة', 'error');
+
+                console.error(
+                    'Error creating match:',
+                    error
+                );
+
+                UI.showToast(
+                    error.message ||
+                    'حدث خطأ أثناء إنشاء المباراة',
+                    'error'
+                );
+
+            } finally {
+
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalText;
+
             }
         });
 
-        // Delete match
-        function setupDeleteButtons() {
-            document.querySelectorAll('.delete-match-btn').forEach(btn => {
-                btn.addEventListener('click', async function() {
-                    const matchId = this.dataset.matchId;
-                    if (!confirm('هل أنت متأكد من حذف هذه المباراة؟')) return;
-                    
-                    try {
-                        await MatchService.deleteMatch(matchId);
-                        UI.showToast('تم حذف المباراة بنجاح', 'success');
-                        await loadMatches();
-                    } catch (error) {
-                        console.error('Error deleting match:', error);
-                        UI.showToast('حدث خطأ أثناء حذف المباراة', 'error');
+    // =========================
+    // Delete Match
+    // =========================
+    function setupDeleteButtons() {
+
+        document
+            .querySelectorAll('.delete-match-btn')
+            .forEach(btn => {
+
+                btn.addEventListener('click', async function () {
+
+                    const matchId =
+                        this.dataset.matchId;
+
+                    if (!matchId) {
+                        return;
                     }
+
+                    const confirmed = confirm(
+                        'هل أنت متأكد من حذف هذه المباراة؟\n\n' +
+                        'سيتم حذف المباراة نهائيًا.'
+                    );
+
+                    if (!confirmed) {
+                        return;
+                    }
+
+                    const button = this;
+
+                    try {
+
+                        button.disabled = true;
+
+                        button.innerHTML = `
+                            <i class="fa-solid fa-spinner fa-spin"></i>
+                        `;
+
+                        await MatchService.deleteMatch(matchId);
+
+                        UI.showToast(
+                            'تم حذف المباراة بنجاح',
+                            'success'
+                        );
+
+                        await loadMatches();
+
+                    } catch (error) {
+
+                        console.error(
+                            'Error deleting match:',
+                            error
+                        );
+
+                        UI.showToast(
+                            getReadableError(error),
+                            'error'
+                        );
+
+                        button.disabled = false;
+
+                        button.innerHTML = `
+                            <i class="fa-solid fa-trash"></i>
+                        `;
+                    }
+
                 });
+
             });
-        }
+    }
 
-        // Modal controls
-        const modal = document.getElementById('create-match-modal');
-        
-        document.getElementById('create-match-btn').addEventListener('click', () => {
+    // =========================
+    // Modal
+    // =========================
+    const modal =
+        document.getElementById('create-match-modal');
+
+    document
+        .getElementById('create-match-btn')
+        .addEventListener('click', () => {
+
             modal.classList.remove('hidden');
-            // Set default date to today
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('match-date').value = today;
+
+            const today =
+                new Date()
+                    .toISOString()
+                    .split('T')[0];
+
+            document.getElementById('match-date').value =
+                today;
         });
 
-        document.getElementById('close-modal-btn').addEventListener('click', closeModal);
-        document.getElementById('cancel-btn').addEventListener('click', closeModal);
+    document
+        .getElementById('close-modal-btn')
+        .addEventListener('click', closeModal);
 
-        function closeModal() {
-            modal.classList.add('hidden');
-            document.getElementById('create-match-form').reset();
+    document
+        .getElementById('cancel-btn')
+        .addEventListener('click', closeModal);
+
+    function closeModal() {
+
+        modal.classList.add('hidden');
+
+        document
+            .getElementById('create-match-form')
+            .reset();
+    }
+
+    // =========================
+    // Logout
+    // =========================
+    document
+        .getElementById('logout-btn')
+        .addEventListener('click', async () => {
+
+            await Auth.signOut();
+
+        });
+
+    // =========================
+    // Helpers
+    // =========================
+    function escapeHtml(value) {
+
+        if (value === null || value === undefined) {
+            return '';
         }
 
-        // Logout handler
-        document.getElementById('logout-btn').addEventListener('click', async () => {
-            await Auth.signOut();
-        });
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
 
-        // Load matches on page load
-        loadMatches();
-    </script>
+    function getReadableError(error) {
+
+        if (!error) {
+            return 'حدث خطأ غير معروف';
+        }
+
+        if (error.code === '23503') {
+            return 'لا يمكن حذف المباراة لأنها مرتبطة بطلبات أو مدفوعات موجودة بالفعل';
+        }
+
+        if (error.code === '42501') {
+            return 'ليس لديك صلاحية لتنفيذ هذه العملية';
+        }
+
+        if (error.code === '23505') {
+            return 'هذه البيانات موجودة بالفعل';
+        }
+
+        return error.message ||
+            'حدث خطأ أثناء تنفيذ العملية';
+    }
+
+    // =========================
+    // Initial Load
+    // =========================
+    loadMatches();
+</script>
 </body>
 </html>
