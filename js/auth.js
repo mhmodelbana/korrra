@@ -79,15 +79,28 @@ export const Auth = {
 
     // Sign up
     async signUp(email, password, name) {
-        const { data, error } = await supabase.auth.signUp({
-            email,
-            password,
-            options: {
-                data: {
-                    name: name
-                }
+    const { data, error } = await supabase.auth.signUp({
+        email: email.trim(),
+        password,
+        options: {
+            data: {
+                name: name.trim()
             }
-        });
+        }
+    });
+
+    if (error) {
+        UI.showToast(error.message, 'error');
+        return { success: false, error };
+    }
+
+    UI.showToast('تم إنشاء الحساب بنجاح', 'success');
+
+    return {
+        success: true,
+        data
+    };
+},
 
         if (error) {
             UI.showToast(error.message, 'error');
