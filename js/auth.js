@@ -94,16 +94,7 @@ export const Auth = {
             return { success: false, error };
         }
 
-        // Create profile
-        if (data.user) {
-            const { error: profileError } = await supabase
-                .from('profiles')
-                .insert([{
-                    id: data.user.id,
-                    email: email,
-                    name: name,
-                    role: 'player'
-                }]);
+    
 
             if (profileError) {
                 console.error('Error creating profile:', profileError);
