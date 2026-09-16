@@ -212,13 +212,7 @@ const isFull = approvedCount >= match.max_players;
 const bookingClosed = isFull || hasStarted;
 
 const approvedPlayerNames = approvedPlayers
-    .map(player => {
-        const request = userRequests.find(
-            r => r.id === player.id
-        );
-
-        return request?.profiles?.name || null;
-    })
+    .map(player => player.profiles?.name)
     .filter(Boolean);
 
                 return `
