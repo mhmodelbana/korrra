@@ -137,4 +137,20 @@ export const RequestService = {
         if (error) throw error;
         return true;
     }
+        // Check if a match has already started
+    async canJoinMatch(matchId) {
+        const { data: match, error } = await supabase
+            .from('matches')
+            .select('match_date, start_time')
+            .eq('id', matchId)
+            .single();
+
+        if (error) throw error;
+
+        const startDateTime = new Date(
+            `${match.match_date}T${match.start_time}`
+        );
+
+        return new Date() < startDateTime;
+    },
 };
