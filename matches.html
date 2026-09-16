@@ -125,9 +125,10 @@
         // Initialize auth
         Auth.init();
 
-        let allMatches = [];
+       let allMatches = [];
 let userRequests = [];
 let allMatchPlayers = [];
+let countdownInterval = null;
 
         // Load matches
         async function loadMatches() {
@@ -177,16 +178,48 @@ const userRequest = userRequests.find(
     request => request.match_id === match.id
 );
 
-const approvedCount = matchPlayers.filter(
+const approvedPlayers = matchPlayers.filter(
     player => player.status === 'approved'
-).length;
+);
+
+const pendingPlayers = matchPlayers.filter(
+    player => player.status === 'pending'
+);
+
+const approvedCount = approvedPlayers.length;
+const pendingCount = pendingPlayers.length;
+
+const remainingSpots = Math.max(
+    0,
+    match.max_players - approvedCount
+);
 
 const costPerPlayer = MatchService.calculatePlayerShare(
     match.total_cost,
     approvedCount
 );
 
+const matchStart = new Date(
+    `${match.match_date}T${match.start_time}`
+);
+
+const now = new Date();
+
+const hasStarted = now >= matchStart;
+
 const isFull = approvedCount >= match.max_players;
+
+const bookingClosed = isFull || hasStarted;
+
+const approvedPlayerNames = approvedPlayers
+    .map(player => {
+        const request = userRequests.find(
+            r => r.id === player.id
+        );
+
+        return request?.profiles?.name || null;
+    })
+    .filter(Boolean);
 
                 return `
                 <div class="glass-panel rounded-3xl p-6 border border-dark-border hover:border-brand-500/40 transition-all duration-300 flex flex-col justify-between group card-hover">
