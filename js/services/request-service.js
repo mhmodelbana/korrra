@@ -112,14 +112,20 @@ export const RequestService = {
 
     // Cancel request
     async cancelRequest(requestId) {
-        const { error } = await supabase
-            .from('match_players')
-            .delete()
-            .eq('id', requestId);
+    const { data, error } = await supabase
+        .from('match_players')
+        .update({
+            status: 'withdrawn',
+            withdrawn_at: new Date().toISOString()
+        })
+        .eq('id', requestId)
+        .eq('user_id', (await supabase.auth.getUser()).data.user.id)
+        .select()
+        .single();
 
-        if (error) throw error;
-        return true;
-    },
+    if (error) throw error;
+    return data;
+},
 
     // Remove player from match
     async removePlayerFromMatch(requestId) {
