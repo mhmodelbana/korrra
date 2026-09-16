@@ -48,13 +48,27 @@ export const RequestService = {
 
         // Get all players for all matches
     async getAllMatchPlayers() {
-        const { data, error } = await supabase
-            .from('match_players')
-            .select('id, match_id, user_id, status, created_at');
+    const { data, error } = await supabase
+        .from('match_players')
+        .select(`
+            id,
+            match_id,
+            user_id,
+            status,
+            created_at,
+            approved_at,
+            withdrawn_at,
+            profiles:user_id(
+                id,
+                name,
+                email
+            )
+        `)
+        .order('created_at', { ascending: true });
 
-        if (error) throw error;
-        return data;
-    },
+    if (error) throw error;
+    return data;
+},
 
     // Create join request
     async createJoinRequest(matchId, userId) {
