@@ -122,6 +122,7 @@
         import { ProfileService } from '../js/services/profile-service.js';
         import { RequestService } from '../js/services/request-service.js';
         import { UI } from '../js/ui.js';
+        import { supabase } from '../js/supabase.js';
 
         // Initialize auth
         Auth.init();
@@ -212,16 +213,30 @@
                         </div>
                     </div>
 
-                    <div class="pt-4 border-t border-dark-border/50">
-                        <button data-player-id="${player.id}" data-current-role="${player.role}" class="change-role-btn w-full bg-dark-card hover:bg-dark-hover border border-dark-border text-white font-bold py-2.5 rounded-xl text-sm transition">
-                            <i class="fa-solid fa-user-gear ml-1"></i> تغيير الدور
-                        </button>
-                    </div>
+                    <div class="pt-4 border-t border-dark-border/50 space-y-2">
+
+    <button
+        data-player-id="${player.id}"
+        class="edit-player-btn w-full bg-brand-500/10 hover:bg-brand-500/20 border border-brand-500/30 text-brand-400 font-bold py-2.5 rounded-xl text-sm transition">
+        <i class="fa-solid fa-user-pen ml-1"></i>
+        تعديل بيانات اللاعب
+    </button>
+
+    <button
+        data-player-id="${player.id}"
+        data-current-role="${player.role}"
+        class="change-role-btn w-full bg-dark-card hover:bg-dark-hover border border-dark-border text-white font-bold py-2.5 rounded-xl text-sm transition">
+        <i class="fa-solid fa-user-gear ml-1"></i>
+        تغيير الدور
+    </button>
+
+</div>
                 </div>
                 `;
             }).join('');
             
             setupRoleButtons();
+setupEditPlayerButtons();
         }
 
         // Change role
@@ -244,7 +259,201 @@
                 });
             });
         }
+// ================================
+// Edit Player
+// ================================
 
+function setupEditPlayerButtons() {
+
+    document.querySelectorAll('.edit-player-btn').forEach(btn => {
+
+        btn.addEventListener('click', () => {
+
+            const playerId = btn.dataset.playerId;
+
+            const player = allPlayers.find(
+                p => p.id === playerId
+            );
+
+            if (!player) return;
+
+            document.getElementById('edit-player-id').value =
+                player.id;
+
+            document.getElementById('edit-player-name').value =
+                player.name || '';
+
+            document.getElementById('edit-player-email').value =
+                player.email || '';
+
+            document.getElementById('edit-player-role').value =
+                player.role || 'player';
+
+            document.getElementById('edit-player-password').value =
+                '';
+
+            document.getElementById('edit-player-modal')
+                .classList.remove('hidden');
+
+        });
+
+    });
+
+}
+
+
+// Close modal
+function closeEditPlayerModal() {
+
+    document.getElementById('edit-player-modal')
+        .classList.add('hidden');
+
+}
+
+
+// Close buttons
+document.getElementById('close-edit-player')
+    .addEventListener('click', closeEditPlayerModal);
+
+document.getElementById('cancel-edit-player')
+    .addEventListener('click', closeEditPlayerModal);
+
+
+// Save player
+document.getElementById('edit-player-form')
+    .addEventListener('submit', async function (event) {
+
+        event.preventDefault();
+
+        const playerId =
+            document.getElementById('edit-player-id').value;
+
+        const name =
+            document.getElementById('edit-player-name').value.trim();
+
+        const email =
+            document.getElementById('edit-player-email').value.trim();
+
+        const role =
+            document.getElementById('edit-player-role').value;
+
+        const password =
+            document.getElementById('edit-player-password').value;
+
+        if (!name) {
+            UI.showToast('اكتب اسم اللاعب', 'error');
+            return;
+        }
+
+        if (!email) {
+            UI.showToast('اكتب البريد الإلكتروني', 'error');
+            return;
+        }
+
+        if (password && password.length < 6) {
+            UI.showToast(
+                'الباسورد الجديد لازم يكون 6 أحرف على الأقل',
+                'error'
+            );
+            return;
+        }
+
+        const saveButton =
+            document.getElementById('save-player-btn');
+
+        saveButton.disabled = true;
+
+        saveButton.innerHTML = `
+            <i class="fa-solid fa-spinner fa-spin ml-1"></i>
+            جاري الحفظ...
+        `;
+
+        try {
+
+            // تحديث بيانات profiles
+            await ProfileService.updateProfile(
+                playerId,
+                {
+                    name,
+                    email,
+                    role
+                }
+            );
+
+            // الحصول على Session الأدمن
+            const {
+                data: {
+                    session
+                }
+            } = await supabase.auth.getSession();
+
+            if (!session) {
+                throw new Error('انتهت جلسة الأدمن');
+            }
+
+            // تغيير email / password في Supabase Auth
+            const response = await fetch(
+                'https://okwyuohckejxhsyeudzk.supabase.co/functions/v1/admin-update-user',
+                {
+                    method: 'POST',
+
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization':
+                            `Bearer ${session.access_token}`
+                    },
+
+                    body: JSON.stringify({
+                        user_id: playerId,
+                        email,
+                        password: password || null
+                    })
+                }
+            );
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(
+                    result.error ||
+                    'فشل تحديث حساب المستخدم'
+                );
+            }
+
+            UI.showToast(
+                'تم تحديث بيانات اللاعب بنجاح',
+                'success'
+            );
+
+            closeEditPlayerModal();
+
+            await loadPlayers();
+
+        } catch (error) {
+
+            console.error(
+                'Error updating player:',
+                error
+            );
+
+            UI.showToast(
+                error.message ||
+                'حدث خطأ أثناء تحديث بيانات اللاعب',
+                'error'
+            );
+
+        } finally {
+
+            saveButton.disabled = false;
+
+            saveButton.innerHTML = `
+                <i class="fa-solid fa-floppy-disk ml-1"></i>
+                حفظ التعديلات
+            `;
+
+        }
+
+    });
         // Search handler
         document.getElementById('search-input').addEventListener('input', async () => {
             await renderPlayers();
@@ -258,5 +467,154 @@
         // Load players on page load
         loadPlayers();
     </script>
+    <!-- Edit Player Modal -->
+<div id="edit-player-modal"
+    class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+
+    <div class="w-full max-w-lg bg-dark-card border border-dark-border rounded-3xl shadow-2xl">
+
+        <!-- Header -->
+        <div class="flex items-center justify-between p-6 border-b border-dark-border">
+
+            <div>
+                <h3 class="text-xl font-black text-white">
+                    تعديل بيانات اللاعب
+                </h3>
+
+                <p class="text-xs text-gray-400 mt-1">
+                    تعديل بيانات الحساب الأساسية
+                </p>
+            </div>
+
+            <button
+                id="close-edit-player"
+                type="button"
+                class="w-10 h-10 rounded-xl bg-dark-hover text-gray-400 hover:text-white transition">
+
+                <i class="fa-solid fa-xmark"></i>
+
+            </button>
+
+        </div>
+
+        <!-- Form -->
+        <form id="edit-player-form" class="p-6 space-y-5">
+
+            <input
+                type="hidden"
+                id="edit-player-id">
+
+            <!-- Name -->
+            <div>
+
+                <label class="block text-sm font-bold text-gray-300 mb-2">
+                    الاسم
+                </label>
+
+                <input
+                    type="text"
+                    id="edit-player-name"
+                    required
+                    autocomplete="name"
+                    class="w-full bg-dark-base border border-dark-border text-white rounded-xl px-4 py-3 focus:outline-none focus:border-brand-500 transition">
+
+            </div>
+
+            <!-- Email -->
+            <div>
+
+                <label class="block text-sm font-bold text-gray-300 mb-2">
+                    البريد الإلكتروني
+                </label>
+
+                <input
+                    type="email"
+                    id="edit-player-email"
+                    required
+                    autocomplete="email"
+                    class="w-full bg-dark-base border border-dark-border text-white rounded-xl px-4 py-3 focus:outline-none focus:border-brand-500 transition">
+
+            </div>
+
+            <!-- Role -->
+            <div>
+
+                <label class="block text-sm font-bold text-gray-300 mb-2">
+                    الدور
+                </label>
+
+                <select
+                    id="edit-player-role"
+                    class="w-full bg-dark-base border border-dark-border text-white rounded-xl px-4 py-3 focus:outline-none focus:border-brand-500 transition">
+
+                    <option value="player">
+                        لاعب
+                    </option>
+
+                    <option value="admin">
+                        أدمن
+                    </option>
+
+                </select>
+
+            </div>
+
+            <!-- New Password -->
+            <div class="p-4 rounded-2xl bg-yellow-500/5 border border-yellow-500/20">
+
+                <div class="flex items-center gap-2 mb-3">
+
+                    <i class="fa-solid fa-lock text-yellow-400"></i>
+
+                    <span class="text-sm font-bold text-yellow-400">
+                        تعيين باسورد جديد
+                    </span>
+
+                </div>
+
+                <p class="text-xs text-gray-400 mb-3">
+                    الباسورد الحالي لا يمكن عرضه.
+                    يمكنك فقط تعيين باسورد جديد.
+                </p>
+
+                <input
+                    type="password"
+                    id="edit-player-password"
+                    minlength="6"
+                    autocomplete="new-password"
+                    placeholder="اتركه فارغًا إذا لا تريد تغييره"
+                    class="w-full bg-dark-base border border-dark-border text-white rounded-xl px-4 py-3 focus:outline-none focus:border-yellow-500 transition">
+
+            </div>
+
+            <!-- Actions -->
+            <div class="flex gap-3 pt-2">
+
+                <button
+                    type="button"
+                    id="cancel-edit-player"
+                    class="flex-1 bg-dark-hover hover:bg-dark-border text-white font-bold py-3 rounded-xl transition">
+
+                    إلغاء
+
+                </button>
+
+                <button
+                    type="submit"
+                    id="save-player-btn"
+                    class="flex-1 bg-brand-600 hover:bg-brand-500 text-white font-bold py-3 rounded-xl transition">
+
+                    <i class="fa-solid fa-floppy-disk ml-1"></i>
+                    حفظ التعديلات
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
 </body>
 </html>
