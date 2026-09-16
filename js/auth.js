@@ -120,17 +120,6 @@ export const Auth = {
 
     // Sign in
     async signIn(email, password) {
-        const { data, error } = await supabase.auth.signInWithPassword({
-            email,
-            password
-        });
-
-        if (error) {
-            UI.showToast(error.message, 'error');
-            return { success: false, error };
-        }
-
-       async signIn(email, password) {
     const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password
@@ -162,10 +151,7 @@ export const Auth = {
     }
 
     return { success: true, data };
-}
-
-        return { success: true, data };
-    },
+},
 
     // Sign out
     async signOut() {
