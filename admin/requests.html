@@ -119,149 +119,470 @@
     </main>
 
     <script type="module">
-        import { Auth } from '../js/auth.js';
-        import { MatchService } from '../js/services/match-service.js';
-        import { RequestService } from '../js/services/request-service.js';
-        import { UI } from '../js/ui.js';
+    import { Auth } from '../js/auth.js';
+    import { MatchService } from '../js/services/match-service.js';
+    import { RequestService } from '../js/services/request-service.js';
+    import { UI } from '../js/ui.js';
 
-        // Initialize auth
-        Auth.init();
+    Auth.init();
 
-        let allMatches = [];
-        let allRequests = [];
+    let allMatches = [];
+    let allRequests = [];
 
-        // Load data
-        async function loadData() {
-            try {
-                await Auth.requireAdmin();
-                
-                UI.showLoading('requests-container', 'جاري تحميل الطلبات...');
-                
-                allMatches = await MatchService.getAllMatches();
-                
-                // Load match filter options
-                const matchFilter = document.getElementById('match-filter');
-                matchFilter.innerHTML = '<option value="">جميع المباريات</option>' + 
-                    allMatches.map(m => `<option value="${m.id}">${m.title}</option>`).join('');
+    // =========================
+    // Load Data
+    // =========================
+    async function loadData() {
+        try {
+            const isAdmin = await Auth.requireAdmin();
 
-                // Load all requests
-                allRequests = await RequestService.getAllRequests();
-
-                renderRequests();
-                
-            } catch (error) {
-                console.error('Error loading requests:', error);
-                UI.showError('requests-container', 'حدث خطأ أثناء تحميل الطلبات');
-            }
-        }
-
-        // Render requests
-        function renderRequests() {
-            const container = document.getElementById('requests-container');
-            const emptyState = document.getElementById('empty-state');
-            const matchFilter = document.getElementById('match-filter').value;
-
-            let filteredRequests = allRequests;
-            if (matchFilter) {
-                filteredRequests = allRequests.filter(r => r.match_id === matchFilter);
-            }
-
-            // Sort by pending first, then by date
-            filteredRequests.sort((a, b) => {
-                if (a.status === 'pending' && b.status !== 'pending') return -1;
-                if (a.status !== 'pending' && b.status === 'pending') return 1;
-                return new Date(b.created_at) - new Date(a.created_at);
-            });
-
-            if (filteredRequests.length === 0) {
-                container.innerHTML = '';
-                emptyState.classList.remove('hidden');
+            if (!isAdmin) {
                 return;
             }
 
-            emptyState.classList.add('hidden');
-            container.innerHTML = filteredRequests.map(request => `
-                <div class="glass-panel rounded-2xl p-6 border border-dark-border flex items-center justify-between gap-4">
-                    <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 rounded-full bg-brand-500/20 text-brand-500 flex items-center justify-center font-bold">
-                            <i class="fa-solid fa-user"></i>
-                        </div>
-                        <div>
-                            <h4 class="font-bold text-white">${request.profiles?.name || 'لاعب'}</h4>
-                            <span class="text-xs text-gray-400">${request.profiles?.email || ''}</span>
-                            <div class="mt-1 text-xs text-gray-300">
-                                <span class="font-bold">${request.matches?.title || 'مباراة'}</span> - ${request.matches?.match_date || ''}
-                            </div>
-                        </div>
-                    </div>
+            UI.showLoading(
+                'requests-container',
+                'جاري تحميل الطلبات...'
+            );
 
-                    <div class="flex items-center gap-3">
-                        <span class="px-3 py-1 rounded-full text-xs font-bold ${
-                            request.status === 'approved' ? 'bg-brand-500/20 text-brand-500 border border-brand-500/30' :
-                            request.status === 'rejected' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
-                            'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
-                        }">
-                            ${request.status === 'approved' ? 'مقبول' : request.status === 'rejected' ? 'مرفوض' : 'معلق'}
-                        </span>
+            // Load matches
+            allMatches = await MatchService.getAllMatches();
 
-                        ${request.status === 'pending' ? `
-                            <div class="flex items-center gap-2">
-                                <button data-request-id="${request.id}" class="approve-request-btn bg-brand-500/20 hover:bg-brand-500 hover:text-black text-brand-500 border border-brand-500/30 text-xs font-bold px-3 py-1.5 rounded-xl transition">
-                                    <i class="fa-solid fa-check"></i> قبول
-                                </button>
-                                <button data-request-id="${request.id}" class="reject-request-btn bg-red-500/20 hover:bg-red-500 hover:text-white text-red-400 border border-red-500/30 text-xs font-bold px-3 py-1.5 rounded-xl transition">
-                                    <i class="fa-solid fa-xmark"></i> رفض
-                                </button>
-                            </div>
-                        ` : ''}
-                    </div>
-                </div>
-            `).join('');
-            
-            setupRequestButtons();
+            // Load filter
+            renderMatchFilter();
+
+            // Load requests
+            allRequests = await RequestService.getAllRequests();
+
+            renderRequests();
+
+        } catch (error) {
+
+            console.error(
+                'Error loading requests:',
+                error
+            );
+
+            UI.showError(
+                'requests-container',
+                getReadableError(error)
+            );
+        }
+    }
+
+    // =========================
+    // Match Filter
+    // =========================
+    function renderMatchFilter() {
+
+        const matchFilter =
+            document.getElementById('match-filter');
+
+        const currentValue =
+            matchFilter.value;
+
+        matchFilter.innerHTML = `
+            <option value="">جميع المباريات</option>
+
+            ${allMatches.map(match => `
+                <option value="${escapeHtml(match.id)}">
+                    ${escapeHtml(match.title)}
+                </option>
+            `).join('')}
+        `;
+
+        // Preserve selected match
+        if (
+            currentValue &&
+            allMatches.some(
+                match => match.id === currentValue
+            )
+        ) {
+            matchFilter.value = currentValue;
+        }
+    }
+
+    // =========================
+    // Render Requests
+    // =========================
+    function renderRequests() {
+
+        const container =
+            document.getElementById('requests-container');
+
+        const emptyState =
+            document.getElementById('empty-state');
+
+        const matchFilter =
+            document.getElementById('match-filter').value;
+
+        let filteredRequests = [...allRequests];
+
+        if (matchFilter) {
+
+            filteredRequests =
+                filteredRequests.filter(
+                    request =>
+                        request.match_id === matchFilter
+                );
         }
 
-        // Approve request
-        function setupRequestButtons() {
-            document.querySelectorAll('.approve-request-btn').forEach(btn => {
-                btn.addEventListener('click', async function() {
-                    const requestId = this.dataset.requestId;
-                    try {
-                        await RequestService.approveRequest(requestId);
-                        UI.showToast('تم قبول الطلب بنجاح', 'success');
-                        await loadData();
-                    } catch (error) {
-                        console.error('Error approving request:', error);
-                        UI.showToast('حدث خطأ أثناء قبول الطلب', 'error');
-                    }
-                });
-            });
+        // Pending first
+        filteredRequests.sort((a, b) => {
 
-            document.querySelectorAll('.reject-request-btn').forEach(btn => {
-                btn.addEventListener('click', async function() {
-                    const requestId = this.dataset.requestId;
-                    try {
-                        await RequestService.rejectRequest(requestId);
-                        UI.showToast('تم رفض الطلب بنجاح', 'success');
-                        await loadData();
-                    } catch (error) {
-                        console.error('Error rejecting request:', error);
-                        UI.showToast('حدث خطأ أثناء رفض الطلب', 'error');
-                    }
-                });
-            });
-        }
+            if (
+                a.status === 'pending' &&
+                b.status !== 'pending'
+            ) {
+                return -1;
+            }
 
-        // Filter handler
-        document.getElementById('match-filter').addEventListener('change', renderRequests);
+            if (
+                a.status !== 'pending' &&
+                b.status === 'pending'
+            ) {
+                return 1;
+            }
 
-        // Logout handler
-        document.getElementById('logout-btn').addEventListener('click', async () => {
-            await Auth.signOut();
+            return (
+                new Date(b.created_at) -
+                new Date(a.created_at)
+            );
         });
 
-        // Load data on page load
-        loadData();
-    </script>
+        if (filteredRequests.length === 0) {
+
+            container.innerHTML = '';
+
+            emptyState.classList.remove('hidden');
+
+            return;
+        }
+
+        emptyState.classList.add('hidden');
+
+        container.innerHTML =
+            filteredRequests.map(request => {
+
+                const playerName =
+                    request.profiles?.name ||
+                    'لاعب';
+
+                const playerEmail =
+                    request.profiles?.email ||
+                    '';
+
+                const matchTitle =
+                    request.matches?.title ||
+                    'مباراة';
+
+                const matchDate =
+                    request.matches?.match_date ||
+                    '';
+
+                const statusText =
+                    request.status === 'approved'
+                        ? 'مقبول'
+                        : request.status === 'rejected'
+                            ? 'مرفوض'
+                            : 'معلق';
+
+                const statusClass =
+                    request.status === 'approved'
+                        ? 'bg-brand-500/20 text-brand-500 border border-brand-500/30'
+                        : request.status === 'rejected'
+                            ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                            : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30';
+
+                return `
+                    <div
+                        class="glass-panel rounded-2xl p-6 border border-dark-border flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5"
+                    >
+
+                        <!-- Player -->
+                        <div class="flex items-center gap-4">
+
+                            <div
+                                class="w-12 h-12 rounded-full bg-brand-500/20 text-brand-500 flex items-center justify-center font-bold shrink-0"
+                            >
+                                <i class="fa-solid fa-user"></i>
+                            </div>
+
+                            <div>
+
+                                <h4 class="font-bold text-white">
+                                    ${escapeHtml(playerName)}
+                                </h4>
+
+                                <span class="text-xs text-gray-400">
+                                    ${escapeHtml(playerEmail)}
+                                </span>
+
+                                <div class="mt-1 text-xs text-gray-300">
+
+                                    <span class="font-bold text-white">
+                                        ${escapeHtml(matchTitle)}
+                                    </span>
+
+                                    <span class="text-gray-500">
+                                        -
+                                    </span>
+
+                                    <span>
+                                        ${escapeHtml(matchDate)}
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <!-- Status + Actions -->
+                        <div class="flex items-center gap-3 w-full lg:w-auto">
+
+                            <span
+                                class="px-3 py-1 rounded-full text-xs font-bold ${statusClass}"
+                            >
+                                ${statusText}
+                            </span>
+
+                            ${
+                                request.status === 'pending'
+                                    ? `
+                                        <div class="flex items-center gap-2 mr-auto lg:mr-0">
+
+                                            <button
+                                                data-request-id="${escapeHtml(request.id)}"
+                                                class="approve-request-btn bg-brand-500/20 hover:bg-brand-500 hover:text-black text-brand-500 border border-brand-500/30 text-xs font-bold px-3 py-1.5 rounded-xl transition"
+                                            >
+                                                <i class="fa-solid fa-check"></i>
+                                                قبول
+                                            </button>
+
+                                            <button
+                                                data-request-id="${escapeHtml(request.id)}"
+                                                class="reject-request-btn bg-red-500/20 hover:bg-red-500 hover:text-white text-red-400 border border-red-500/30 text-xs font-bold px-3 py-1.5 rounded-xl transition"
+                                            >
+                                                <i class="fa-solid fa-xmark"></i>
+                                                رفض
+                                            </button>
+
+                                        </div>
+                                    `
+                                    : ''
+                            }
+
+                        </div>
+
+                    </div>
+                `;
+
+            }).join('');
+
+        setupRequestButtons();
+    }
+
+    // =========================
+    // Request Buttons
+    // =========================
+    function setupRequestButtons() {
+
+        document
+            .querySelectorAll('.approve-request-btn')
+            .forEach(button => {
+
+                button.addEventListener(
+                    'click',
+                    async function () {
+
+                        const requestId =
+                            this.dataset.requestId;
+
+                        if (!requestId) {
+                            return;
+                        }
+
+                        const originalHTML =
+                            this.innerHTML;
+
+                        try {
+
+                            this.disabled = true;
+
+                            this.innerHTML = `
+                                <i class="fa-solid fa-spinner fa-spin"></i>
+                                جاري...
+                            `;
+
+                            await RequestService.approveRequest(
+                                requestId
+                            );
+
+                            UI.showToast(
+                                'تم قبول الطلب بنجاح',
+                                'success'
+                            );
+
+                            await loadData();
+
+                        } catch (error) {
+
+                            console.error(
+                                'Error approving request:',
+                                error
+                            );
+
+                            UI.showToast(
+                                getReadableError(error),
+                                'error'
+                            );
+
+                            this.disabled = false;
+                            this.innerHTML =
+                                originalHTML;
+                        }
+                    }
+                );
+            });
+
+        document
+            .querySelectorAll('.reject-request-btn')
+            .forEach(button => {
+
+                button.addEventListener(
+                    'click',
+                    async function () {
+
+                        const requestId =
+                            this.dataset.requestId;
+
+                        if (!requestId) {
+                            return;
+                        }
+
+                        const confirmed = confirm(
+                            'هل أنت متأكد من رفض طلب الانضمام؟'
+                        );
+
+                        if (!confirmed) {
+                            return;
+                        }
+
+                        const originalHTML =
+                            this.innerHTML;
+
+                        try {
+
+                            this.disabled = true;
+
+                            this.innerHTML = `
+                                <i class="fa-solid fa-spinner fa-spin"></i>
+                                جاري...
+                            `;
+
+                            await RequestService.rejectRequest(
+                                requestId
+                            );
+
+                            UI.showToast(
+                                'تم رفض الطلب',
+                                'success'
+                            );
+
+                            await loadData();
+
+                        } catch (error) {
+
+                            console.error(
+                                'Error rejecting request:',
+                                error
+                            );
+
+                            UI.showToast(
+                                getReadableError(error),
+                                'error'
+                            );
+
+                            this.disabled = false;
+                            this.innerHTML =
+                                originalHTML;
+                        }
+                    }
+                );
+            });
+    }
+
+    // =========================
+    // Filter
+    // =========================
+    document
+        .getElementById('match-filter')
+        .addEventListener(
+            'change',
+            renderRequests
+        );
+
+    // =========================
+    // Logout
+    // =========================
+    document
+        .getElementById('logout-btn')
+        .addEventListener(
+            'click',
+            async () => {
+                await Auth.signOut();
+            }
+        );
+
+    // =========================
+    // Helpers
+    // =========================
+    function escapeHtml(value) {
+
+        if (
+            value === null ||
+            value === undefined
+        ) {
+            return '';
+        }
+
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function getReadableError(error) {
+
+        if (!error) {
+            return 'حدث خطأ غير معروف';
+        }
+
+        if (error.code === '42501') {
+            return 'ليس لديك صلاحية لتنفيذ هذه العملية';
+        }
+
+        if (error.code === '23503') {
+            return 'البيانات مرتبطة بسجل آخر ولا يمكن تنفيذ العملية';
+        }
+
+        if (error.code === '23505') {
+            return 'هذا الطلب موجود بالفعل';
+        }
+
+        return (
+            error.message ||
+            'حدث خطأ أثناء تنفيذ العملية'
+        );
+    }
+
+    // =========================
+    // Initial Load
+    // =========================
+    loadData();
+</script>
 </body>
 </html>
