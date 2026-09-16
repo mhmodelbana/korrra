@@ -247,6 +247,90 @@ const approvedPlayerNames = approvedPlayers
                             </div>
                         </div>
 
+                         <!-- Players Status -->
+<div class="space-y-3 mb-6">
+
+    <div class="grid grid-cols-2 gap-3">
+
+        <div class="bg-dark-base rounded-2xl border border-dark-border p-3 text-center">
+            <div class="text-xs text-gray-400 mb-1">
+                الأماكن المتبقية
+            </div>
+
+            <div class="text-xl font-black ${
+                remainingSpots === 0
+                    ? 'text-red-400'
+                    : 'text-brand-neon'
+            }">
+                ${remainingSpots}
+            </div>
+        </div>
+
+        <div class="bg-dark-base rounded-2xl border border-dark-border p-3 text-center">
+            <div class="text-xs text-gray-400 mb-1">
+                طلبات معلقة
+            </div>
+
+            <div class="text-xl font-black text-yellow-400">
+                ${pendingCount}
+            </div>
+        </div>
+
+    </div>
+
+    ${
+        approvedPlayerNames.length > 0
+        ? `
+        <div class="bg-dark-base rounded-2xl border border-dark-border p-4">
+
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-bold text-gray-300">
+                    <i class="fa-solid fa-users text-brand-500 ml-1"></i>
+                    اللاعبين المقبولين
+                </span>
+
+                <span class="text-xs text-brand-500 font-bold">
+                    ${approvedCount}/${match.max_players}
+                </span>
+            </div>
+
+            <div class="flex flex-wrap gap-2">
+                ${approvedPlayers.map(player => `
+                    <span class="inline-flex items-center gap-1.5 bg-brand-500/10 border border-brand-500/20 text-gray-200 px-2.5 py-1.5 rounded-lg text-xs">
+                        <i class="fa-solid fa-user text-brand-500"></i>
+                        ${player.profiles?.name || 'لاعب'}
+                    </span>
+                `).join('')}
+            </div>
+
+        </div>
+        `
+        : `
+        <div class="bg-dark-base rounded-2xl border border-dark-border p-4 text-center text-xs text-gray-500">
+            لسه مفيش لاعبين مقبولين
+        </div>
+        `
+    }
+
+</div>
+
+                <!-- Countdown -->
+<div
+    id="countdown-${match.id}"
+    data-start="${match.match_date}T${match.start_time}"
+    class="bg-brand-500/10 border border-brand-500/20 rounded-2xl p-4 mb-6"
+>
+    <div class="flex items-center gap-2 mb-2">
+        <i class="fa-solid fa-hourglass-half text-brand-500"></i>
+        <span class="text-xs font-bold text-gray-300">
+            ${hasStarted ? 'المباراة بدأت' : 'المباراة تبدأ خلال'}
+        </span>
+    </div>
+
+    <div class="text-lg font-black text-white countdown-value">
+        ${hasStarted ? 'جارية الآن 🔥' : 'جاري الحساب...'}
+    </div>
+</div>
                         <!-- Dynamic Auto-Recalculation Display Box -->
                         <div class="bg-dark-base p-4 rounded-2xl border border-dark-border mb-6">
                             <div class="flex items-center justify-between text-xs mb-1">
@@ -262,16 +346,55 @@ const approvedPlayerNames = approvedPlayers
 
                     <!-- Action Button -->
                     <div class="pt-2 border-t border-dark-border/50">
-                        ${userRequest ? `
-                            <div class="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-center flex items-center justify-center gap-2 ${
-                                userRequest.status === 'approved' ? 'bg-brand-500/20 text-brand-500 border border-brand-500/40' :
-                                userRequest.status === 'rejected' ? 'bg-red-500/20 text-red-400 border border-red-500/40' :
-                                'bg-yellow-500/20 text-yellow-400 border border-yellow-500/40'
-                            }">
-                                <i class="fa-solid ${userRequest.status === 'approved' ? 'fa-circle-check' : userRequest.status === 'rejected' ? 'fa-circle-xmark' : 'fa-hourglass-half'}"></i>
-                                <span>${userRequest.status === 'approved' ? 'تم تأكيد انضمامك' : userRequest.status === 'rejected' ? 'تم رفض الطلب' : 'طلبك قيد المراجعة'}</span>
-                            </div>
-                        ` : `
+                        ${userRequest && userRequest.status !== 'withdrawn' ? `
+
+    <div class="space-y-2">
+
+        <div class="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-center flex items-center justify-center gap-2 ${
+            userRequest.status === 'approved'
+                ? 'bg-brand-500/20 text-brand-500 border border-brand-500/40'
+                : userRequest.status === 'rejected'
+                    ? 'bg-red-500/20 text-red-400 border border-red-500/40'
+                    : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/40'
+        }">
+
+            <i class="fa-solid ${
+                userRequest.status === 'approved'
+                    ? 'fa-circle-check'
+                    : userRequest.status === 'rejected'
+                        ? 'fa-circle-xmark'
+                        : 'fa-hourglass-half'
+            }"></i>
+
+            <span>
+                ${
+                    userRequest.status === 'approved'
+                        ? 'تم تأكيد انضمامك'
+                        : userRequest.status === 'rejected'
+                            ? 'تم رفض الطلب'
+                            : 'طلبك قيد المراجعة'
+                }
+            </span>
+
+        </div>
+
+        ${
+            userRequest.status === 'approved' && !hasStarted
+            ? `
+            <button
+                data-request-id="${userRequest.id}"
+                class="withdraw-match-btn w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 font-bold py-2.5 px-4 rounded-xl text-xs transition"
+            >
+                <i class="fa-solid fa-right-from-bracket ml-1"></i>
+                الانسحاب من المباراة
+            </button>
+            `
+            : ''
+        }
+
+    </div>
+
+` : `
                             <button data-match-id="${match.id}" ${isFull ? 'disabled' : ''} class="join-match-btn w-full ${isFull ? 'bg-gray-800 text-gray-500 cursor-not-allowed' : 'bg-brand-500 hover:bg-brand-400 text-black shadow-lg shadow-brand-500/20'} font-extrabold py-2.5 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2">
                                 <i class="fa-solid fa-user-plus"></i>
                                 <span>${isFull ? 'المباراة مكتملة' : 'تقديم طلب انضمام'}</span>
