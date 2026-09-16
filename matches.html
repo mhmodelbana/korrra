@@ -380,53 +380,233 @@ const approvedPlayerNames = approvedPlayers
 
         ${
             userRequest.status === 'approved' && !hasStarted
-            ? `
-            <button
-                data-request-id="${userRequest.id}"
-                class="withdraw-match-btn w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 font-bold py-2.5 px-4 rounded-xl text-xs transition"
-            >
-                <i class="fa-solid fa-right-from-bracket ml-1"></i>
-                الانسحاب من المباراة
-            </button>
-            `
-            : ''
+                ? `
+                    <button
+                        data-request-id="${userRequest.id}"
+                        class="withdraw-match-btn w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 font-bold py-2.5 px-4 rounded-xl text-xs transition"
+                    >
+                        <i class="fa-solid fa-right-from-bracket ml-1"></i>
+                        الانسحاب من المباراة
+                    </button>
+                `
+                : ''
         }
 
     </div>
 
 ` : `
-                            <button data-match-id="${match.id}" ${isFull ? 'disabled' : ''} class="join-match-btn w-full ${isFull ? 'bg-gray-800 text-gray-500 cursor-not-allowed' : 'bg-brand-500 hover:bg-brand-400 text-black shadow-lg shadow-brand-500/20'} font-extrabold py-2.5 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2">
-                                <i class="fa-solid fa-user-plus"></i>
-                                <span>${isFull ? 'المباراة مكتملة' : 'تقديم طلب انضمام'}</span>
-                            </button>
-                        `}
+
+    <button
+        data-match-id="${match.id}"
+        ${bookingClosed ? 'disabled' : ''}
+        class="join-match-btn w-full ${
+            bookingClosed
+                ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
+                : 'bg-brand-500 hover:bg-brand-400 text-black shadow-lg shadow-brand-500/20'
+        } font-extrabold py-2.5 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2"
+    >
+
+        <i class="fa-solid ${
+            hasStarted
+                ? 'fa-lock'
+                : isFull
+                    ? 'fa-users-slash'
+                    : 'fa-user-plus'
+        }"></i>
+
+        <span>
+            ${
+                hasStarted
+                    ? 'المباراة بدأت'
+                    : isFull
+                        ? 'المباراة مكتملة'
+                        : 'تقديم طلب انضمام'
+            }
+        </span>
+
+    </button>
+
+`}
                     </div>
                 </div>
                 `;
             }).join('');
             
             setupJoinButtons();
+startCountdowns();
         }
 
         // Join match
         function setupJoinButtons() {
-            document.querySelectorAll('.join-match-btn').forEach(btn => {
-                btn.addEventListener('click', async function() {
-                    const matchId = this.dataset.matchId;
-                    if (this.disabled) return;
-                    
-                    try {
-                        await RequestService.createJoinRequest(matchId, Auth.currentUser.id);
-                        UI.showToast('تم إرسال طلب الانضمام بنجاح', 'success');
-                        await loadMatches();
-                    } catch (error) {
-                        console.error('Error joining match:', error);
-                        UI.showToast(error.message || 'حدث خطأ أثناء إرسال الطلب', 'error');
-                    }
-                });
-            });
-        }
 
+    // Join buttons
+    document.querySelectorAll('.join-match-btn').forEach(btn => {
+
+        btn.addEventListener('click', async function () {
+
+            const matchId = this.dataset.matchId;
+
+            if (this.disabled) return;
+
+            try {
+
+                const canJoin = await RequestService.canJoinMatch(matchId);
+
+                if (!canJoin) {
+                    UI.showToast(
+                        'لا يمكن الحجز بعد بداية المباراة',
+                        'error'
+                    );
+                    return;
+                }
+
+                this.disabled = true;
+
+                await RequestService.createJoinRequest(
+                    matchId,
+                    Auth.currentUser.id
+                );
+
+                UI.showToast(
+                    'تم إرسال طلب الانضمام بنجاح',
+                    'success'
+                );
+
+                await loadMatches();
+
+            } catch (error) {
+
+                console.error('Error joining match:', error);
+
+                UI.showToast(
+                    error.message || 'حدث خطأ أثناء إرسال الطلب',
+                    'error'
+                );
+
+                this.disabled = false;
+            }
+
+        });
+
+    });
+
+
+    // Withdrawal buttons
+    document.querySelectorAll('.withdraw-match-btn').forEach(btn => {
+
+        btn.addEventListener('click', async function () {
+
+            const requestId = this.dataset.requestId;
+
+            if (!requestId) return;
+
+            const confirmed = confirm(
+                'هل أنت متأكد من الانسحاب من المباراة؟'
+            );
+
+            if (!confirmed) return;
+
+            try {
+
+                this.disabled = true;
+
+                await RequestService.cancelRequest(
+                    requestId
+                );
+
+                UI.showToast(
+                    'تم الانسحاب من المباراة بنجاح',
+                    'success'
+                );
+
+                await loadMatches();
+
+            } catch (error) {
+
+                console.error(
+                    'Error withdrawing from match:',
+                    error
+                );
+
+                UI.showToast(
+                    error.message || 'حدث خطأ أثناء الانسحاب',
+                    'error'
+                );
+
+                this.disabled = false;
+            }
+
+        });
+
+    });
+
+}
+             function startCountdowns() {
+
+    if (countdownInterval) {
+        clearInterval(countdownInterval);
+    }
+
+    function updateCountdowns() {
+
+        document.querySelectorAll('[id^="countdown-"]').forEach(box => {
+
+            const startValue = box.dataset.start;
+
+            if (!startValue) return;
+
+            const startTime = new Date(startValue);
+            const now = new Date();
+
+            const diff = startTime - now;
+
+            const value = box.querySelector('.countdown-value');
+
+            if (!value) return;
+
+            if (diff <= 0) {
+
+                value.textContent = 'المباراة بدأت 🔥';
+
+                return;
+            }
+
+            const totalSeconds = Math.floor(diff / 1000);
+
+            const days = Math.floor(totalSeconds / 86400);
+
+            const hours = Math.floor(
+                (totalSeconds % 86400) / 3600
+            );
+
+            const minutes = Math.floor(
+                (totalSeconds % 3600) / 60
+            );
+
+            const seconds = totalSeconds % 60;
+
+            let text = '';
+
+            if (days > 0) {
+                text += `${days} يوم `;
+            }
+
+            text += `${String(hours).padStart(2, '0')}:`;
+            text += `${String(minutes).padStart(2, '0')}:`;
+            text += `${String(seconds).padStart(2, '0')}`;
+
+            value.textContent = text;
+        });
+
+    }
+
+    updateCountdowns();
+
+    countdownInterval = setInterval(
+        updateCountdowns,
+        1000
+    );
+}
         // Filter handlers
         document.getElementById('search-input').addEventListener('input', renderMatches);
         document.getElementById('date-filter').addEventListener('change', renderMatches);
