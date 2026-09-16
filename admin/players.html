@@ -40,6 +40,31 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../css/styles.css">
+    <style>
+    #players-grid {
+        display: grid;
+        grid-template-columns: repeat(1, minmax(0, 1fr));
+        gap: 1.5rem;
+        align-items: start;
+    }
+
+    @media (min-width: 768px) {
+        #players-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (min-width: 1024px) {
+        #players-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+    }
+
+    #players-grid > * {
+        min-width: 0;
+        width: 100%;
+    }
+</style>
 </head>
 <body class="min-h-screen bg-dark-base">
     <!-- Navigation Bar -->
