@@ -130,16 +130,39 @@ export const Auth = {
             return { success: false, error };
         }
 
-        this.currentUser = data.user;
-        await this.loadUserProfile();
-        
-        // Redirect based on role
-        const role = await this.getUserRole();
-        if (role === 'admin') {
-            window.location.href = 'admin/index.html';
-        } else {
-            window.location.href = 'dashboard.html';
-        }
+       async signIn(email, password) {
+    const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password
+    });
+
+    if (error) {
+        console.error('Login error:', error);
+        UI.showToast(error.message, 'error');
+        return { success: false, error };
+    }
+
+    this.currentUser = data.user;
+
+    const profile = await this.loadUserProfile();
+
+    console.log('USER:', this.currentUser);
+    console.log('PROFILE:', profile);
+    console.log('ROLE:', profile?.role);
+
+    if (!profile) {
+        UI.showToast('لم يتم العثور على بيانات الحساب', 'error');
+        return { success: false };
+    }
+
+    if (profile.role === 'admin') {
+        window.location.href = './admin/index.html';
+    } else {
+        window.location.href = './dashboard.html';
+    }
+
+    return { success: true, data };
+}
 
         return { success: true, data };
     },
