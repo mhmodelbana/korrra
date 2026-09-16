@@ -40,13 +40,17 @@ export const RequestService = {
             .from('match_players')
             .select(`
                 *,
-                matches:match_id(
-                    title,
-                    match_date,
-                    start_time,
-                    total_cost,
-                    max_players
-                )
+               matches:match_id(
+    id,
+    title,
+    pitch_name,
+    match_date,
+    start_time,
+    end_time,
+    total_cost,
+    max_players,
+    notes
+)
             `)
             .eq('user_id', userId)
             .order('created_at', { ascending: false });
