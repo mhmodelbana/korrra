@@ -182,7 +182,13 @@ const approvedPlayers = matchPlayers.filter(
     player => player.status === 'approved'
 );
 
-console.log('APPROVED PLAYERS:', approvedPlayers);
+console.table(
+    approvedPlayers.map(player => ({
+        user_id: player.user_id,
+        player_name: player.profiles?.name || 'NO NAME',
+        profile_data: JSON.stringify(player.profiles || null)
+    }))
+);
 
 const pendingPlayers = matchPlayers.filter(
     player => player.status === 'pending'
