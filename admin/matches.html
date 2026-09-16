@@ -278,8 +278,21 @@ await renderMatches();
 
         const hasStarted = new Date() >= matchStart;
 
-        const bookingClosed =
-            isFull || hasStarted;
+        const bookingClosed = isFull || hasStarted;
+
+let matchStatusText = 'الحجز مفتوح';
+let matchStatusClass = 'bg-brand-500/10 text-brand-500 border-brand-500/30';
+let matchStatusIcon = 'fa-door-open';
+
+if (hasStarted) {
+    matchStatusText = 'المباراة بدأت';
+    matchStatusClass = 'bg-blue-500/10 text-blue-400 border-blue-500/30';
+    matchStatusIcon = 'fa-play';
+} else if (isFull) {
+    matchStatusText = 'المباراة مكتملة';
+    matchStatusClass = 'bg-red-500/10 text-red-400 border-red-500/30';
+    matchStatusIcon = 'fa-lock';
+}
 
         const costPerPlayer =
             MatchService.calculatePlayerShare(
@@ -316,11 +329,16 @@ await renderMatches();
 
 
                 <!-- Title -->
-                <h3
-                    class="text-xl font-black text-white mb-4"
-                >
-                    ${escapeHtml(match.title)}
-                </h3>
+<div class="flex items-start justify-between gap-3 mb-4">
+    <h3 class="text-xl font-black text-white">
+        ${escapeHtml(match.title)}
+    </h3>
+
+    <span class="shrink-0 ${matchStatusClass} border px-2.5 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1">
+        <i class="fa-solid ${matchStatusIcon}"></i>
+        ${matchStatusText}
+    </span>
+</div>
 
 
                 <!-- Match Details -->
@@ -337,7 +355,35 @@ await renderMatches();
                         </span>
                     </div>
 
+                                         ${
+    bookingClosed
+        ? `
+            <div class="w-full ${
+                hasStarted
+                    ? 'bg-blue-500/10 border-blue-500/20 text-blue-400'
+                    : 'bg-red-500/10 border-red-500/20 text-red-400'
+            } border rounded-xl px-4 py-2.5 text-xs font-bold flex items-center justify-center gap-2">
+                <i class="fa-solid ${
+                    hasStarted ? 'fa-play' : 'fa-lock'
+                }"></i>
 
+                <span>
+                    ${
+                        hasStarted
+                            ? 'المباراة بدأت — الحجز مغلق'
+                            : 'اكتملت المباراة — الحجز مغلق'
+                    }
+                </span>
+            </div>
+        `
+        : `
+            <div class="w-full bg-brand-500/10 border border-brand-500/20 text-brand-500 rounded-xl px-4 py-2.5 text-xs font-bold flex items-center justify-center gap-2">
+                <i class="fa-solid fa-door-open"></i>
+                الحجز مفتوح — ${remainingSpots} أماكن متبقية
+            </div>
+        `
+}
+ 
                     <div class="flex items-center gap-2">
                         <i class="fa-regular fa-clock text-brand-500 w-4"></i>
 
@@ -368,6 +414,33 @@ await renderMatches();
 
                 <!-- Players Stats -->
                 <div class="grid grid-cols-3 gap-2 mb-4">
+
+                      <div class="bg-dark-base rounded-2xl border border-dark-border p-3 mb-4">
+    <div class="flex items-center justify-between text-xs mb-2">
+        <span class="text-gray-400">
+            نسبة امتلاء المباراة
+        </span>
+
+        <span class="text-white font-bold">
+            ${maxPlayers > 0
+                ? Math.round((approvedCount / maxPlayers) * 100)
+                : 0}%
+        </span>
+    </div>
+
+    <div class="w-full h-2 bg-dark-hover rounded-full overflow-hidden">
+        <div
+            class="h-full rounded-full transition-all duration-500 ${
+                isFull ? 'bg-red-500' : 'bg-brand-500'
+            }"
+            style="width: ${
+                maxPlayers > 0
+                    ? Math.min(100, (approvedCount / maxPlayers) * 100)
+                    : 0
+            }%"
+        ></div>
+    </div>
+</div>
 
                     <div
                         class="bg-dark-base rounded-2xl border border-dark-border p-3 text-center"
@@ -536,22 +609,20 @@ await renderMatches();
                 <div class="pt-3 border-t border-dark-border/50 space-y-2">
 
                     <a
-                        href="requests.html?match_id=${encodeURIComponent(match.id)}"
-                        class="w-full bg-brand-500/10 hover:bg-brand-500/20 border border-brand-500/30 text-brand-500 font-bold py-2.5 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2"
-                    >
+    href="requests.html?match_id=${encodeURIComponent(match.id)}"
+    class="w-full bg-brand-500/10 hover:bg-brand-500/20 border border-brand-500/30 text-brand-500 font-bold py-2.5 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2"
+>
+    <i class="fa-solid fa-user-check"></i>
 
-                        <i class="fa-solid fa-user-check"></i>
-
-                        <span>
-                            إدارة الطلبات
-                            ${
-                                pendingCount > 0
-                                    ? `(${pendingCount})`
-                                    : ''
-                            }
-                        </span>
-
-                    </a>
+    <span>
+        إدارة الطلبات
+        ${
+            pendingCount > 0
+                ? `(${pendingCount} معلق)`
+                : ''
+        }
+    </span>
+</a>
 
 
                     <div class="flex items-center gap-2">
@@ -607,13 +678,22 @@ await renderMatches();
                     return;
                 }
 
-                if (diff <= 0) {
+               if (diff <= 0) {
 
-                    value.textContent =
-                        'المباراة بدأت 🔥';
+    value.textContent = 'المباراة بدأت 🔥';
 
-                    return;
-                }
+    box.classList.remove(
+        'bg-brand-500/10',
+        'border-brand-500/20'
+    );
+
+    box.classList.add(
+        'bg-blue-500/10',
+        'border-blue-500/20'
+    );
+
+    return;
+}
 
                 const totalSeconds =
                     Math.floor(diff / 1000);
