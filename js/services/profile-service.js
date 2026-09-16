@@ -15,6 +15,23 @@ export const ProfileService = {
 
     // Update user profile
     async updateProfile(userId, profileData) {
+
+    const { data, error } = await supabase
+        .from('profiles')
+        .update(profileData)
+        .eq('id', userId)
+        .select();
+
+    if (error) {
+        throw error;
+    }
+
+    if (!data || data.length === 0) {
+        throw new Error('لم يتم العثور على بيانات اللاعب أو لا توجد صلاحية لتعديلها');
+    }
+
+    return data[0];
+},
         const { data, error } = await supabase
             .from('profiles')
             .update(profileData)
