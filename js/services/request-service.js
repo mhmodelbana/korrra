@@ -46,6 +46,16 @@ export const RequestService = {
         return data;
     },
 
+        // Get all players for all matches
+    async getAllMatchPlayers() {
+        const { data, error } = await supabase
+            .from('match_players')
+            .select('id, match_id, user_id, status, created_at');
+
+        if (error) throw error;
+        return data;
+    },
+
     // Create join request
     async createJoinRequest(matchId, userId) {
         // Check if request already exists
