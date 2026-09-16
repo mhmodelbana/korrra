@@ -103,7 +103,7 @@
         </div>
 
         <!-- Players Grid -->
-        <div id="players-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div id="players-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
             <!-- Dynamic content -->
         </div>
 
@@ -178,15 +178,20 @@
                 const pendingRequests = playerRequests.filter(r => r.status === 'pending').length;
 
                 return `
-                <div class="glass-panel rounded-2xl p-6 border border-dark-border card-hover">
+                <div class="glass-panel rounded-2xl p-6 border border-dark-border card-hover w-full min-w-0 overflow-hidden">
                     <div class="flex items-center gap-4 mb-4">
                         <div class="w-14 h-14 rounded-full bg-brand-500/20 text-brand-500 flex items-center justify-center font-bold text-xl">
                             <i class="fa-solid fa-user"></i>
                         </div>
-                        <div>
-                            <h4 class="font-bold text-white text-lg">${player.name}</h4>
-                            <span class="text-xs text-gray-400">${player.email}</span>
-                        </div>
+                       <div class="min-w-0 flex-1">
+    <h4 class="font-bold text-white text-lg truncate">
+        ${player.name}
+    </h4>
+
+    <span class="block text-xs text-gray-400 truncate">
+        ${player.email}
+    </span>
+</div>
                     </div>
 
                     <div class="space-y-3 mb-4">
