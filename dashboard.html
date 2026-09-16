@@ -772,12 +772,19 @@ function renderUpcomingMatches(requests) {
                     return false;
                 }
 
-                const start =
-                    new Date(
-                        `${request.matches.match_date}T${request.matches.start_time}`
-                    );
+                if (
+    !request.matches.match_date ||
+    !request.matches.start_time
+) {
+    return false;
+}
 
-                return start >= new Date();
+const start =
+    new Date(
+        `${request.matches.match_date}T${request.matches.start_time}`
+    );
+
+return start >= new Date();
 
             })
             .sort((a, b) => {
@@ -823,7 +830,9 @@ function renderUpcomingMatches(requests) {
 
 
             const start =
-                `${match.match_date}T${match.start_time}`;
+    match.match_date && match.start_time
+        ? `${match.match_date}T${match.start_time}`
+        : null;
 
 
             return `
@@ -886,10 +895,20 @@ function renderUpcomingMatches(requests) {
                             </div>
 
                             <div class="text-xs font-bold text-white">
-                                ${UI.formatTime(match.start_time)}
-                                -
-                                ${UI.formatTime(match.end_time)}
-                            </div>
+    ${
+        match.start_time
+            ? UI.formatTime(match.start_time)
+            : 'غير محدد'
+    }
+
+    -
+
+    ${
+        match.end_time
+            ? UI.formatTime(match.end_time)
+            : 'غير محدد'
+    }
+</div>
 
                         </div>
 
@@ -898,7 +917,7 @@ function renderUpcomingMatches(requests) {
 
                     <div
                         class="admin-countdown-box bg-brand-500/10 border border-brand-500/20 rounded-xl p-3"
-                        data-start="${start}"
+                        data-start="${start || ''}"
                     >
 
                         <div class="flex items-center gap-2 text-xs text-gray-300">
