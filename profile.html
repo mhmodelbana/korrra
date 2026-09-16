@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KoraMatch | الملف الشخصي</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#ecfdf5',
+                            100: '#d1fae5',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                            800: '#065f46',
+                            900: '#064e3b',
+                            neon: '#00ff87'
+                        },
+                        dark: {
+                            base: '#0b0f17',
+                            card: '#131b29',
+                            border: '#1f293d',
+                            hover: '#1a2436'
+                        }
+                    },
+                    fontFamily: {
+                        cairo: ['Cairo', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="min-h-screen bg-dark-base">
+    <!-- Navigation Bar -->
+    <header class="sticky top-0 z-40 glass-panel border-b border-dark-border">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+            <!-- Logo -->
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-brand-600 to-brand-neon flex items-center justify-center text-black font-black text-2xl shadow-lg shadow-brand-500/20">
+                    <i class="fa-solid fa-futbol"></i>
+                </div>
+                <div>
+                    <span class="text-2xl font-black tracking-wider text-white">ملعبنا<span class="text-brand-500">.</span></span>
+                    <p class="text-xs text-gray-400 font-medium hidden sm:block">منصة حجز وحساب مباريات الكرة</p>
+                </div>
+            </div>
+
+            <!-- User Menu -->
+            <div class="flex items-center gap-3">
+                <a href="dashboard.html" class="bg-dark-card hover:bg-dark-hover border border-dark-border text-white px-4 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2">
+                    <i class="fa-solid fa-home text-brand-500"></i>
+                    <span>الرئيسية</span>
+                </a>
+                <a href="matches.html" class="bg-dark-card hover:bg-dark-hover border border-dark-border text-white px-4 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2">
+                    <i class="fa-solid fa-calendar-days text-brand-500"></i>
+                    <span>المباريات</span>
+                </a>
+                <button id="logout-btn" class="bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-400 px-4 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2">
+                    <i class="fa-solid fa-sign-out-alt"></i>
+                    <span>تسجيل الخروج</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Profile Card -->
+            <div class="glass-panel rounded-2xl p-6 border border-dark-border">
+                <div class="text-center mb-6">
+                    <div class="w-20 h-20 rounded-full bg-brand-500/20 text-brand-500 flex items-center justify-center font-black text-3xl mx-auto mb-4">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <h2 class="text-xl font-black text-white" id="profile-name">اللاعب</h2>
+                    <p class="text-sm text-gray-400" id="profile-email">email@example.com</p>
+                    <span class="inline-block mt-2 px-3 py-1 rounded-full text-xs font-bold bg-brand-500/20 text-brand-500 border border-brand-500/30">
+                        <i class="fa-solid fa-user ml-1"></i> لاعب
+                    </span>
+                </div>
+
+                <form id="profile-form" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-300 mb-1.5">الاسم</label>
+                        <input type="text" id="name-input" class="w-full bg-dark-base border border-dark-border text-white text-sm rounded-xl px-4 py-2.5 focus:outline-none focus:border-brand-500 transition">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-300 mb-1.5">البريد الإلكتروني</label>
+                        <input type="email" id="email-input" disabled class="w-full bg-dark-base border border-dark-border text-gray-400 text-sm rounded-xl px-4 py-2.5 cursor-not-allowed">
+                    </div>
+                    <button type="submit" class="w-full bg-brand-500 hover:bg-brand-400 text-black font-extrabold py-2.5 rounded-xl text-sm transition">
+                        حفظ التغييرات
+                    </button>
+                </form>
+            </div>
+
+            <!-- Stats & Activity -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Stats -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="glass-panel rounded-2xl p-4 border border-dark-border text-center">
+                        <div class="text-3xl font-black text-white mb-1" id="total-matches">0</div>
+                        <div class="text-xs text-gray-400 font-bold">إجمالي المباريات</div>
+                    </div>
+                    <div class="glass-panel rounded-2xl p-4 border border-dark-border text-center">
+                        <div class="text-3xl font-black text-brand-500 mb-1" id="confirmed-matches">0</div>
+                        <div class="text-xs text-gray-400 font-bold">مباريات مؤكدة</div>
+                    </div>
+                    <div class="glass-panel rounded-2xl p-4 border border-dark-border text-center">
+                        <div class="text-3xl font-black text-yellow-500 mb-1" id="pending-requests">0</div>
+                        <div class="text-xs text-gray-400 font-bold">طلبات معلقة</div>
+                    </div>
+                </div>
+
+                <!-- Booking History -->
+                <div class="glass-panel rounded-2xl p-6 border border-dark-border">
+                    <h3 class="text-lg font-black text-white mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-list-check text-brand-500"></i>
+                        <span>سجل الحجوزات</span>
+                    </h3>
+                    <div id="booking-history" class="space-y-3">
+                        <!-- Dynamic content -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script type="module">
+        import { Auth } from './js/auth.js';
+        import { ProfileService } from './js/services/profile-service.js';
+        import { RequestService } from './js/services/request-service.js';
+        import { UI } from './js/ui.js';
+
+        // Initialize auth
+        Auth.init();
+
+        // Load profile data
+        async function loadProfile() {
+            try {
+                await Auth.requireAuth();
+                
+                const user = Auth.currentUser;
+                const profile = Auth.userProfile;
+
+                if (profile) {
+                    document.getElementById('profile-name').textContent = profile.name;
+                    document.getElementById('profile-email').textContent = profile.email;
+                    document.getElementById('name-input').value = profile.name;
+                    document.getElementById('email-input').value = profile.email;
+                }
+
+                // Load user stats
+                const stats = await ProfileService.getUserStats(user.id);
+                document.getElementById('total-matches').textContent = stats.total_matches;
+                document.getElementById('confirmed-matches').textContent = stats.total_matches;
+                document.getElementById('pending-requests').textContent = stats.pending_requests;
+
+                // Load booking history
+                const requests = await RequestService.getUserRequests(user.id);
+                const historyContainer = document.getElementById('booking-history');
+
+                if (requests.length === 0) {
+                    UI.showEmpty('booking-history', 'لا توجد حجوزات سابقة');
+                } else {
+                    historyContainer.innerHTML = requests.map(request => `
+                        <div class="p-4 rounded-xl bg-dark-base border border-dark-border flex items-center justify-between gap-3">
+                            <div>
+                                <h4 class="font-bold text-white text-sm">${request.matches?.title || 'مباراة'}</h4>
+                                <span class="text-xs text-gray-400">${request.matches?.match_date || ''} (${request.matches?.start_time || ''})</span>
+                            </div>
+                            <span class="px-2.5 py-1 rounded-full text-xs font-bold ${
+                                request.status === 'approved' ? 'bg-brand-500/20 text-brand-500 border border-brand-500/30' :
+                                request.status === 'rejected' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
+                                'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
+                            }">
+                                ${request.status === 'approved' ? 'مقبول' : request.status === 'rejected' ? 'مرفوض' : 'معلق'}
+                            </span>
+                        </div>
+                    `).join('');
+                }
+
+            } catch (error) {
+                console.error('Error loading profile:', error);
+                UI.showToast('حدث خطأ أثناء تحميل البيانات', 'error');
+            }
+        }
+
+        // Update profile
+        document.getElementById('profile-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('name-input').value;
+            
+            try {
+                await ProfileService.updateProfile(Auth.currentUser.id, { name });
+                UI.showToast('تم تحديث الملف الشخصي بنجاح', 'success');
+                await loadProfile();
+            } catch (error) {
+                console.error('Error updating profile:', error);
+                UI.showToast('حدث خطأ أثناء تحديث الملف الشخصي', 'error');
+            }
+        });
+
+        // Logout handler
+        document.getElementById('logout-btn').addEventListener('click', async () => {
+            await Auth.signOut();
+        });
+
+        // Load profile on page load
+        loadProfile();
+    </script>
+</body>
+</html>

@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KoraMatch | إدارة الطلبات</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#ecfdf5',
+                            100: '#d1fae5',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                            800: '#065f46',
+                            900: '#064e3b',
+                            neon: '#00ff87'
+                        },
+                        dark: {
+                            base: '#0b0f17',
+                            card: '#131b29',
+                            border: '#1f293d',
+                            hover: '#1a2436'
+                        }
+                    },
+                    fontFamily: {
+                        cairo: ['Cairo', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body class="min-h-screen bg-dark-base">
+    <!-- Navigation Bar -->
+    <header class="sticky top-0 z-40 glass-panel border-b border-dark-border">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+            <!-- Logo -->
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-brand-600 to-brand-neon flex items-center justify-center text-black font-black text-2xl shadow-lg shadow-brand-500/20">
+                    <i class="fa-solid fa-futbol"></i>
+                </div>
+                <div>
+                    <span class="text-2xl font-black tracking-wider text-white">ملعبنا<span class="text-brand-500">.</span></span>
+                    <p class="text-xs text-gray-400 font-medium hidden sm:block">إدارة طلبات الانضمام</p>
+                </div>
+            </div>
+
+            <!-- Admin Menu -->
+            <div class="flex items-center gap-3">
+                <a href="index.html" class="bg-dark-card hover:bg-dark-hover border border-dark-border text-white px-4 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2">
+                    <i class="fa-solid fa-home text-brand-500"></i>
+                    <span>الرئيسية</span>
+                </a>
+                <a href="matches.html" class="bg-dark-card hover:bg-dark-hover border border-dark-border text-white px-4 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2">
+                    <i class="fa-solid fa-calendar-days text-brand-500"></i>
+                    <span>المباريات</span>
+                </a>
+                <a href="players.html" class="bg-dark-card hover:bg-dark-hover border border-dark-border text-white px-4 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2">
+                    <i class="fa-solid fa-users text-brand-500"></i>
+                    <span>اللاعبين</span>
+                </a>
+                <a href="payments.html" class="bg-dark-card hover:bg-dark-hover border border-dark-border text-white px-4 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2">
+                    <i class="fa-solid fa-money-bill-wave text-brand-500"></i>
+                    <span>المدفوعات</span>
+                </a>
+                <button id="logout-btn" class="bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-400 px-4 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2">
+                    <i class="fa-solid fa-sign-out-alt"></i>
+                    <span>تسجيل الخروج</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <!-- Header -->
+        <div class="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
+            <div>
+                <h2 class="text-2xl font-black text-white flex items-center gap-2">
+                    <i class="fa-solid fa-user-check text-brand-500"></i>
+                    <span>إدارة طلبات الانضمام</span>
+                </h2>
+                <p class="text-xs text-gray-400 mt-1">قبول أو رفض طلبات الانضمام للمباريات</p>
+            </div>
+
+            <!-- Match Filter -->
+            <div class="flex items-center gap-3">
+                <select id="match-filter" class="bg-dark-card border border-dark-border text-white text-sm rounded-xl px-4 py-2.5 focus:outline-none focus:border-brand-500 transition">
+                    <option value="">جميع المباريات</option>
+                    <!-- Dynamic options -->
+                </select>
+            </div>
+        </div>
+
+        <!-- Requests List -->
+        <div id="requests-container" class="space-y-4">
+            <!-- Dynamic content -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="empty-state" class="hidden text-center py-16 glass-panel rounded-3xl border border-dark-border">
+            <div class="w-16 h-16 bg-dark-hover text-gray-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                <i class="fa-solid fa-inbox font-normal"></i>
+            </div>
+            <h3 class="text-lg font-bold text-white mb-1">لا توجد طلبات</h3>
+            <p class="text-sm text-gray-400">لا توجد طلبات انضمام معلقة حالياً</p>
+        </div>
+    </main>
+
+    <script type="module">
+        import { Auth } from '../js/auth.js';
+        import { MatchService } from '../js/services/match-service.js';
+        import { RequestService } from '../js/services/request-service.js';
+        import { UI } from '../js/ui.js';
+
+        // Initialize auth
+        Auth.init();
+
+        let allMatches = [];
+        let allRequests = [];
+
+        // Load data
+        async function loadData() {
+            try {
+                await Auth.requireAdmin();
+                
+                UI.showLoading('requests-container', 'جاري تحميل الطلبات...');
+                
+                allMatches = await MatchService.getAllMatches();
+                
+                // Load match filter options
+                const matchFilter = document.getElementById('match-filter');
+                matchFilter.innerHTML = '<option value="">جميع المباريات</option>' + 
+                    allMatches.map(m => `<option value="${m.id}">${m.title}</option>`).join('');
+
+                // Load all requests
+                allRequests = await RequestService.getAllRequests();
+
+                renderRequests();
+                
+            } catch (error) {
+                console.error('Error loading requests:', error);
+                UI.showError('requests-container', 'حدث خطأ أثناء تحميل الطلبات');
+            }
+        }
+
+        // Render requests
+        function renderRequests() {
+            const container = document.getElementById('requests-container');
+            const emptyState = document.getElementById('empty-state');
+            const matchFilter = document.getElementById('match-filter').value;
+
+            let filteredRequests = allRequests;
+            if (matchFilter) {
+                filteredRequests = allRequests.filter(r => r.match_id === matchFilter);
+            }
+
+            // Sort by pending first, then by date
+            filteredRequests.sort((a, b) => {
+                if (a.status === 'pending' && b.status !== 'pending') return -1;
+                if (a.status !== 'pending' && b.status === 'pending') return 1;
+                return new Date(b.created_at) - new Date(a.created_at);
+            });
+
+            if (filteredRequests.length === 0) {
+                container.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            container.innerHTML = filteredRequests.map(request => `
+                <div class="glass-panel rounded-2xl p-6 border border-dark-border flex items-center justify-between gap-4">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-full bg-brand-500/20 text-brand-500 flex items-center justify-center font-bold">
+                            <i class="fa-solid fa-user"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-white">${request.profiles?.name || 'لاعب'}</h4>
+                            <span class="text-xs text-gray-400">${request.profiles?.email || ''}</span>
+                            <div class="mt-1 text-xs text-gray-300">
+                                <span class="font-bold">${request.matches?.title || 'مباراة'}</span> - ${request.matches?.match_date || ''}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <span class="px-3 py-1 rounded-full text-xs font-bold ${
+                            request.status === 'approved' ? 'bg-brand-500/20 text-brand-500 border border-brand-500/30' :
+                            request.status === 'rejected' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
+                            'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
+                        }">
+                            ${request.status === 'approved' ? 'مقبول' : request.status === 'rejected' ? 'مرفوض' : 'معلق'}
+                        </span>
+
+                        ${request.status === 'pending' ? `
+                            <div class="flex items-center gap-2">
+                                <button data-request-id="${request.id}" class="approve-request-btn bg-brand-500/20 hover:bg-brand-500 hover:text-black text-brand-500 border border-brand-500/30 text-xs font-bold px-3 py-1.5 rounded-xl transition">
+                                    <i class="fa-solid fa-check"></i> قبول
+                                </button>
+                                <button data-request-id="${request.id}" class="reject-request-btn bg-red-500/20 hover:bg-red-500 hover:text-white text-red-400 border border-red-500/30 text-xs font-bold px-3 py-1.5 rounded-xl transition">
+                                    <i class="fa-solid fa-xmark"></i> رفض
+                                </button>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+            
+            setupRequestButtons();
+        }
+
+        // Approve request
+        function setupRequestButtons() {
+            document.querySelectorAll('.approve-request-btn').forEach(btn => {
+                btn.addEventListener('click', async function() {
+                    const requestId = this.dataset.requestId;
+                    try {
+                        await RequestService.approveRequest(requestId);
+                        UI.showToast('تم قبول الطلب بنجاح', 'success');
+                        await loadData();
+                    } catch (error) {
+                        console.error('Error approving request:', error);
+                        UI.showToast('حدث خطأ أثناء قبول الطلب', 'error');
+                    }
+                });
+            });
+
+            document.querySelectorAll('.reject-request-btn').forEach(btn => {
+                btn.addEventListener('click', async function() {
+                    const requestId = this.dataset.requestId;
+                    try {
+                        await RequestService.rejectRequest(requestId);
+                        UI.showToast('تم رفض الطلب بنجاح', 'success');
+                        await loadData();
+                    } catch (error) {
+                        console.error('Error rejecting request:', error);
+                        UI.showToast('حدث خطأ أثناء رفض الطلب', 'error');
+                    }
+                });
+            });
+        }
+
+        // Filter handler
+        document.getElementById('match-filter').addEventListener('change', renderRequests);
+
+        // Logout handler
+        document.getElementById('logout-btn').addEventListener('click', async () => {
+            await Auth.signOut();
+        });
+
+        // Load data on page load
+        loadData();
+    </script>
+</body>
+</html>

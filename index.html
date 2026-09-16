@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KoraMatch | منصة حجز المباريات الاحترافية</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#ecfdf5',
+                            100: '#d1fae5',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                            800: '#065f46',
+                            900: '#064e3b',
+                            neon: '#00ff87'
+                        },
+                        dark: {
+                            base: '#0b0f17',
+                            card: '#131b29',
+                            border: '#1f293d',
+                            hover: '#1a2436'
+                        }
+                    },
+                    fontFamily: {
+                        cairo: ['Cairo', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="min-h-screen flex items-center justify-center bg-dark-base">
+    <div class="max-w-md w-full mx-4 text-center">
+        <!-- Logo Section -->
+        <div class="mb-8">
+            <div class="w-24 h-24 rounded-2xl bg-gradient-to-tr from-brand-600 to-brand-neon flex items-center justify-center text-black font-black text-5xl shadow-lg shadow-brand-500/20 mx-auto mb-6">
+                <i class="fa-solid fa-futbol"></i>
+            </div>
+            <h1 class="text-4xl font-black text-white mb-2">ملعبنا<span class="text-brand-500">.</span></h1>
+            <p class="text-gray-400 text-lg">منصة حجز وحساب مباريات الكرة</p>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loading-state" class="glass-panel rounded-3xl p-8 border border-dark-border">
+            <div class="flex items-center justify-center py-8">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-500"></div>
+            </div>
+            <p class="text-gray-400 text-sm">جاري التحقق من حالة الدخول...</p>
+        </div>
+
+        <!-- Auth Buttons (Hidden initially) -->
+        <div id="auth-buttons" class="hidden space-y-4">
+            <a href="login.html" class="block w-full bg-brand-500 hover:bg-brand-400 text-black font-extrabold py-4 rounded-xl text-lg transition shadow-lg shadow-brand-500/20">
+                <i class="fa-solid fa-sign-in-alt ml-2"></i>
+                تسجيل الدخول
+            </a>
+            <a href="register.html" class="block w-full bg-dark-card hover:bg-dark-hover border border-dark-border text-white font-bold py-4 rounded-xl text-lg transition">
+                <i class="fa-solid fa-user-plus ml-2"></i>
+                إنشاء حساب جديد
+            </a>
+        </div>
+    </div>
+
+    <script type="module">
+        import { Auth } from './js/auth.js';
+
+        // Initialize auth
+        Auth.init();
+
+        // Check auth status and redirect
+        async function checkAuth() {
+            try {
+                const session = await Auth.getSession();
+                
+                if (session) {
+                    // User is logged in, load profile and redirect
+                    Auth.currentUser = session.user;
+                    await Auth.loadUserProfile();
+                    
+                    const role = await Auth.getUserRole();
+                    if (role === 'admin') {
+                        window.location.href = 'admin/index.html';
+                    } else {
+                        window.location.href = 'dashboard.html';
+                    }
+                } else {
+                    // User is not logged in, show auth buttons
+                    document.getElementById('loading-state').classList.add('hidden');
+                    document.getElementById('auth-buttons').classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Error checking auth:', error);
+                // Show auth buttons on error
+                document.getElementById('loading-state').classList.add('hidden');
+                document.getElementById('auth-buttons').classList.remove('hidden');
+            }
+        }
+
+        // Check auth on page load
+        checkAuth();
+    </script>
+</body>
+</html>

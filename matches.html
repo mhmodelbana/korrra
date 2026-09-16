@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KoraMatch | المباريات المتاحة</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#ecfdf5',
+                            100: '#d1fae5',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                            800: '#065f46',
+                            900: '#064e3b',
+                            neon: '#00ff87'
+                        },
+                        dark: {
+                            base: '#0b0f17',
+                            card: '#131b29',
+                            border: '#1f293d',
+                            hover: '#1a2436'
+                        }
+                    },
+                    fontFamily: {
+                        cairo: ['Cairo', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="min-h-screen bg-dark-base">
+    <!-- Navigation Bar -->
+    <header class="sticky top-0 z-40 glass-panel border-b border-dark-border">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+            <!-- Logo -->
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-brand-600 to-brand-neon flex items-center justify-center text-black font-black text-2xl shadow-lg shadow-brand-500/20">
+                    <i class="fa-solid fa-futbol"></i>
+                </div>
+                <div>
+                    <span class="text-2xl font-black tracking-wider text-white">ملعبنا<span class="text-brand-500">.</span></span>
+                    <p class="text-xs text-gray-400 font-medium hidden sm:block">منصة حجز وحساب مباريات الكرة</p>
+                </div>
+            </div>
+
+            <!-- User Menu -->
+            <div class="flex items-center gap-3">
+                <a href="dashboard.html" class="bg-dark-card hover:bg-dark-hover border border-dark-border text-white px-4 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2">
+                    <i class="fa-solid fa-home text-brand-500"></i>
+                    <span>الرئيسية</span>
+                </a>
+                <a href="profile.html" class="bg-dark-card hover:bg-dark-hover border border-dark-border text-white px-4 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2">
+                    <i class="fa-solid fa-user text-brand-500"></i>
+                    <span>الملف الشخصي</span>
+                </a>
+                <button id="logout-btn" class="bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-400 px-4 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2">
+                    <i class="fa-solid fa-sign-out-alt"></i>
+                    <span>تسجيل الخروج</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <!-- Header -->
+        <div class="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
+            <div>
+                <h2 class="text-2xl font-black text-white flex items-center gap-2">
+                    <i class="fa-solid fa-calendar-days text-brand-500"></i>
+                    <span>المباريات المتاحة</span>
+                </h2>
+                <p class="text-xs text-gray-400 mt-1">اختر المباراة المناسبة لك وقدم طلب انضمام فوراً</p>
+            </div>
+
+            <!-- Search & Filter -->
+            <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                <div class="relative flex-grow md:w-64">
+                    <i class="fa-solid fa-magnifying-glass absolute right-3 top-3.5 text-gray-500 text-sm"></i>
+                    <input type="text" id="search-input" placeholder="بحث باسم الملعب أو المباراة..." 
+                        class="w-full bg-dark-card border border-dark-border text-white text-sm rounded-xl pr-9 pl-4 py-2.5 focus:outline-none focus:border-brand-500 transition">
+                </div>
+                <input type="date" id="date-filter" 
+                    class="bg-dark-card border border-dark-border text-white text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:border-brand-500 transition">
+                <button id="reset-filters" class="bg-dark-card hover:bg-dark-hover border border-dark-border text-gray-400 hover:text-white px-3 py-2.5 rounded-xl text-sm transition">
+                    <i class="fa-solid fa-rotate-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Matches Grid -->
+        <div id="matches-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Dynamic content -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="empty-state" class="hidden text-center py-16 glass-panel rounded-3xl border border-dark-border">
+            <div class="w-16 h-16 bg-dark-hover text-gray-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                <i class="fa-solid fa-futbol font-normal"></i>
+            </div>
+            <h3 class="text-lg font-bold text-white mb-1">لا توجد مباريات متاحة حالياً</h3>
+            <p class="text-sm text-gray-400 mb-4">جرب البحث بكلمة أخرى أو قم بإنشاء مباراة جديدة إذا كنت الآدمن.</p>
+        </div>
+    </main>
+
+    <script type="module">
+        import { Auth } from './js/auth.js';
+        import { MatchService } from './js/services/match-service.js';
+        import { RequestService } from './js/services/request-service.js';
+        import { UI } from './js/ui.js';
+
+        // Initialize auth
+        Auth.init();
+
+        let allMatches = [];
+        let userRequests = [];
+
+        // Load matches
+        async function loadMatches() {
+            try {
+                await Auth.requireAuth();
+                
+                UI.showLoading('matches-grid', 'جاري تحميل المباريات...');
+                
+                allMatches = await MatchService.getAllMatches();
+                userRequests = await RequestService.getUserRequests(Auth.currentUser.id);
+                
+                renderMatches();
+                
+            } catch (error) {
+                console.error('Error loading matches:', error);
+                UI.showError('matches-grid', 'حدث خطأ أثناء تحميل المباريات');
+            }
+        }
+
+        // Render matches
+        function renderMatches() {
+            const grid = document.getElementById('matches-grid');
+            const emptyState = document.getElementById('empty-state');
+            const searchVal = document.getElementById('search-input').value.toLowerCase();
+            const dateVal = document.getElementById('date-filter').value;
+
+            const filteredMatches = allMatches.filter(m => {
+                const matchSearch = m.title.toLowerCase().includes(searchVal) || m.pitch_name.toLowerCase().includes(searchVal);
+                const matchDate = !dateVal || m.match_date === dateVal;
+                return matchSearch && matchDate;
+            });
+
+            if (filteredMatches.length === 0) {
+                grid.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            grid.innerHTML = filteredMatches.map(match => {
+                const matchRequests = userRequests.filter(r => r.match_id === match.id);
+                const userRequest = matchRequests.find(r => r.user_id === Auth.currentUser.id);
+                
+                const approvedCount = matchRequests.filter(r => r.status === 'approved').length;
+                const costPerPlayer = MatchService.calculatePlayerShare(match.total_cost, approvedCount);
+                const isFull = approvedCount >= match.max_players;
+
+                return `
+                <div class="glass-panel rounded-3xl p-6 border border-dark-border hover:border-brand-500/40 transition-all duration-300 flex flex-col justify-between group card-hover">
+                    <div>
+                        <!-- Card Header -->
+                        <div class="flex items-start justify-between gap-2 mb-3">
+                            <span class="bg-brand-500/10 text-brand-500 border border-brand-500/30 text-xs px-3 py-1 rounded-full font-bold">
+                                <i class="fa-solid fa-shield-halved ml-1"></i> ${match.pitch_name}
+                            </span>
+                            <span class="text-xs px-2.5 py-1 rounded-lg font-bold ${isFull ? 'bg-red-500/10 text-red-400 border border-red-500/30' : 'bg-dark-hover text-gray-300 border border-dark-border'}">
+                                ${approvedCount} / ${match.max_players} لاعبين
+                            </span>
+                        </div>
+
+                        <!-- Match Title -->
+                        <h3 class="text-xl font-black text-white group-hover:text-brand-500 transition mb-4">${match.title}</h3>
+
+                        <!-- Details Grid -->
+                        <div class="space-y-2 mb-6 text-xs text-gray-300">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-regular fa-calendar text-brand-500 w-4"></i>
+                                <span>التاريخ: <strong class="text-white">${UI.formatDate(match.match_date)}</strong></span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <i class="fa-regular fa-clock text-brand-500 w-4"></i>
+                                <span>التوقيت: <strong class="text-white">${UI.formatTime(match.start_time)} - ${UI.formatTime(match.end_time)}</strong></span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-money-bill-wave text-brand-500 w-4"></i>
+                                <span>التكلفة الإجمالية: <strong class="text-white">${match.total_cost} ج.م</strong></span>
+                            </div>
+                        </div>
+
+                        <!-- Dynamic Auto-Recalculation Display Box -->
+                        <div class="bg-dark-base p-4 rounded-2xl border border-dark-border mb-6">
+                            <div class="flex items-center justify-between text-xs mb-1">
+                                <span class="text-gray-400">حصة اللاعب الحالية:</span>
+                                <span class="text-brand-neon font-black">${approvedCount > 0 ? 'مقسمة على ' + approvedCount : 'في انتظار أول لاعب'}</span>
+                            </div>
+                            <div class="flex items-baseline gap-1">
+                                <span class="text-2xl font-black text-white">${costPerPlayer}</span>
+                                <span class="text-xs text-gray-400 font-bold">جنيه / لاعب</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Button -->
+                    <div class="pt-2 border-t border-dark-border/50">
+                        ${userRequest ? `
+                            <div class="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-center flex items-center justify-center gap-2 ${
+                                userRequest.status === 'approved' ? 'bg-brand-500/20 text-brand-500 border border-brand-500/40' :
+                                userRequest.status === 'rejected' ? 'bg-red-500/20 text-red-400 border border-red-500/40' :
+                                'bg-yellow-500/20 text-yellow-400 border border-yellow-500/40'
+                            }">
+                                <i class="fa-solid ${userRequest.status === 'approved' ? 'fa-circle-check' : userRequest.status === 'rejected' ? 'fa-circle-xmark' : 'fa-hourglass-half'}"></i>
+                                <span>${userRequest.status === 'approved' ? 'تم تأكيد انضمامك' : userRequest.status === 'rejected' ? 'تم رفض الطلب' : 'طلبك قيد المراجعة'}</span>
+                            </div>
+                        ` : `
+                            <button data-match-id="${match.id}" ${isFull ? 'disabled' : ''} class="join-match-btn w-full ${isFull ? 'bg-gray-800 text-gray-500 cursor-not-allowed' : 'bg-brand-500 hover:bg-brand-400 text-black shadow-lg shadow-brand-500/20'} font-extrabold py-2.5 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-user-plus"></i>
+                                <span>${isFull ? 'المباراة مكتملة' : 'تقديم طلب انضمام'}</span>
+                            </button>
+                        `}
+                    </div>
+                </div>
+                `;
+            }).join('');
+            
+            setupJoinButtons();
+        }
+
+        // Join match
+        function setupJoinButtons() {
+            document.querySelectorAll('.join-match-btn').forEach(btn => {
+                btn.addEventListener('click', async function() {
+                    const matchId = this.dataset.matchId;
+                    if (this.disabled) return;
+                    
+                    try {
+                        await RequestService.createJoinRequest(matchId, Auth.currentUser.id);
+                        UI.showToast('تم إرسال طلب الانضمام بنجاح', 'success');
+                        await loadMatches();
+                    } catch (error) {
+                        console.error('Error joining match:', error);
+                        UI.showToast(error.message || 'حدث خطأ أثناء إرسال الطلب', 'error');
+                    }
+                });
+            });
+        }
+
+        // Filter handlers
+        document.getElementById('search-input').addEventListener('input', renderMatches);
+        document.getElementById('date-filter').addEventListener('change', renderMatches);
+        document.getElementById('reset-filters').addEventListener('click', () => {
+            document.getElementById('search-input').value = '';
+            document.getElementById('date-filter').value = '';
+            renderMatches();
+        });
+
+        // Logout handler
+        document.getElementById('logout-btn').addEventListener('click', async () => {
+            await Auth.signOut();
+        });
+
+        // Load matches on page load
+        loadMatches();
+    </script>
+</body>
+</html>

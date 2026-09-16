@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KoraMatch | إدارة اللاعبين</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#ecfdf5',
+                            100: '#d1fae5',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                            800: '#065f46',
+                            900: '#064e3b',
+                            neon: '#00ff87'
+                        },
+                        dark: {
+                            base: '#0b0f17',
+                            card: '#131b29',
+                            border: '#1f293d',
+                            hover: '#1a2436'
+                        }
+                    },
+                    fontFamily: {
+                        cairo: ['Cairo', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body class="min-h-screen bg-dark-base">
+    <!-- Navigation Bar -->
+    <header class="sticky top-0 z-40 glass-panel border-b border-dark-border">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+            <!-- Logo -->
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-brand-600 to-brand-neon flex items-center justify-center text-black font-black text-2xl shadow-lg shadow-brand-500/20">
+                    <i class="fa-solid fa-futbol"></i>
+                </div>
+                <div>
+                    <span class="text-2xl font-black tracking-wider text-white">ملعبنا<span class="text-brand-500">.</span></span>
+                    <p class="text-xs text-gray-400 font-medium hidden sm:block">إدارة اللاعبين</p>
+                </div>
+            </div>
+
+            <!-- Admin Menu -->
+            <div class="flex items-center gap-3">
+                <a href="index.html" class="bg-dark-card hover:bg-dark-hover border border-dark-border text-white px-4 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2">
+                    <i class="fa-solid fa-home text-brand-500"></i>
+                    <span>الرئيسية</span>
+                </a>
+                <a href="matches.html" class="bg-dark-card hover:bg-dark-hover border border-dark-border text-white px-4 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2">
+                    <i class="fa-solid fa-calendar-days text-brand-500"></i>
+                    <span>المباريات</span>
+                </a>
+                <a href="requests.html" class="bg-dark-card hover:bg-dark-hover border border-dark-border text-white px-4 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2">
+                    <i class="fa-solid fa-user-check text-brand-500"></i>
+                    <span>الطلبات</span>
+                </a>
+                <a href="payments.html" class="bg-dark-card hover:bg-dark-hover border border-dark-border text-white px-4 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2">
+                    <i class="fa-solid fa-money-bill-wave text-brand-500"></i>
+                    <span>المدفوعات</span>
+                </a>
+                <button id="logout-btn" class="bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-400 px-4 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2">
+                    <i class="fa-solid fa-sign-out-alt"></i>
+                    <span>تسجيل الخروج</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <!-- Header -->
+        <div class="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
+            <div>
+                <h2 class="text-2xl font-black text-white flex items-center gap-2">
+                    <i class="fa-solid fa-users text-brand-500"></i>
+                    <span>إدارة اللاعبين</span>
+                </h2>
+                <p class="text-xs text-gray-400 mt-1">عرض وإدارة حسابات اللاعبين</p>
+            </div>
+
+            <!-- Search -->
+            <div class="relative flex-grow md:w-64">
+                <i class="fa-solid fa-magnifying-glass absolute right-3 top-3.5 text-gray-500 text-sm"></i>
+                <input type="text" id="search-input" placeholder="بحث بالاسم أو البريد..." 
+                    class="w-full bg-dark-card border border-dark-border text-white text-sm rounded-xl pr-9 pl-4 py-2.5 focus:outline-none focus:border-brand-500 transition">
+            </div>
+        </div>
+
+        <!-- Players Grid -->
+        <div id="players-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Dynamic content -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="empty-state" class="hidden text-center py-16 glass-panel rounded-3xl border border-dark-border">
+            <div class="w-16 h-16 bg-dark-hover text-gray-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                <i class="fa-solid fa-users font-normal"></i>
+            </div>
+            <h3 class="text-lg font-bold text-white mb-1">لا يوجد لاعبين</h3>
+            <p class="text-sm text-gray-400">لا يوجد لاعبين مسجلين حالياً</p>
+        </div>
+    </main>
+
+    <script type="module">
+        import { Auth } from '../js/auth.js';
+        import { ProfileService } from '../js/services/profile-service.js';
+        import { RequestService } from '../js/services/request-service.js';
+        import { UI } from '../js/ui.js';
+
+        // Initialize auth
+        Auth.init();
+
+        let allPlayers = [];
+        let allRequests = [];
+
+        // Load players
+        async function loadPlayers() {
+            try {
+                await Auth.requireAdmin();
+                
+                UI.showLoading('players-grid', 'جاري تحميل اللاعبين...');
+                
+                allPlayers = await ProfileService.getAllProfiles();
+                
+                // Load all requests to calculate match counts
+                allRequests = [];
+                for (const player of allPlayers) {
+                    const requests = await RequestService.getUserRequests(player.id);
+                    allRequests.push(...requests);
+                }
+
+                await renderPlayers();
+                
+            } catch (error) {
+                console.error('Error loading players:', error);
+                UI.showError('players-grid', 'حدث خطأ أثناء تحميل اللاعبين');
+            }
+        }
+
+        // Render players
+        async function renderPlayers() {
+            const grid = document.getElementById('players-grid');
+            const emptyState = document.getElementById('empty-state');
+            const searchVal = document.getElementById('search-input').value.toLowerCase();
+
+            const filteredPlayers = allPlayers.filter(p => {
+                const searchMatch = p.name.toLowerCase().includes(searchVal) || p.email.toLowerCase().includes(searchVal);
+                return searchMatch;
+            });
+
+            if (filteredPlayers.length === 0) {
+                grid.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            grid.innerHTML = filteredPlayers.map(player => {
+                const playerRequests = allRequests.filter(r => r.user_id === player.id);
+                const confirmedMatches = playerRequests.filter(r => r.status === 'approved').length;
+                const pendingRequests = playerRequests.filter(r => r.status === 'pending').length;
+
+                return `
+                <div class="glass-panel rounded-2xl p-6 border border-dark-border card-hover">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-14 h-14 rounded-full bg-brand-500/20 text-brand-500 flex items-center justify-center font-bold text-xl">
+                            <i class="fa-solid fa-user"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-white text-lg">${player.name}</h4>
+                            <span class="text-xs text-gray-400">${player.email}</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3 mb-4">
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="text-gray-400">الدور:</span>
+                            <span class="px-2.5 py-1 rounded-full text-xs font-bold ${
+                                player.role === 'admin' ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' :
+                                'bg-brand-500/20 text-brand-500 border border-brand-500/30'
+                            }">
+                                ${player.role === 'admin' ? 'أدمن' : 'لاعب'}
+                            </span>
+                        </div>
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="text-gray-400">المباريات المؤكدة:</span>
+                            <span class="text-white font-bold">${confirmedMatches}</span>
+                        </div>
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="text-gray-400">الطلبات المعلقة:</span>
+                            <span class="text-white font-bold">${pendingRequests}</span>
+                        </div>
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="text-gray-400">تاريخ التسجيل:</span>
+                            <span class="text-white font-bold">${UI.formatDate(player.created_at)}</span>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t border-dark-border/50">
+                        <button data-player-id="${player.id}" data-current-role="${player.role}" class="change-role-btn w-full bg-dark-card hover:bg-dark-hover border border-dark-border text-white font-bold py-2.5 rounded-xl text-sm transition">
+                            <i class="fa-solid fa-user-gear ml-1"></i> تغيير الدور
+                        </button>
+                    </div>
+                </div>
+                `;
+            }).join('');
+            
+            setupRoleButtons();
+        }
+
+        // Change role
+        function setupRoleButtons() {
+            document.querySelectorAll('.change-role-btn').forEach(btn => {
+                btn.addEventListener('click', async function() {
+                    const playerId = this.dataset.playerId;
+                    const currentRole = this.dataset.currentRole;
+                    const newRole = currentRole === 'admin' ? 'player' : 'admin';
+                    if (!confirm(`هل أنت متأكد من تغيير دور هذا المستخدم إلى ${newRole === 'admin' ? 'أدمن' : 'لاعب'}؟`)) return;
+                    
+                    try {
+                        await ProfileService.updateProfile(playerId, { role: newRole });
+                        UI.showToast('تم تغيير الدور بنجاح', 'success');
+                        await loadPlayers();
+                    } catch (error) {
+                        console.error('Error changing role:', error);
+                        UI.showToast('حدث خطأ أثناء تغيير الدور', 'error');
+                    }
+                });
+            });
+        }
+
+        // Search handler
+        document.getElementById('search-input').addEventListener('input', async () => {
+            await renderPlayers();
+        });
+
+        // Logout handler
+        document.getElementById('logout-btn').addEventListener('click', async () => {
+            await Auth.signOut();
+        });
+
+        // Load players on page load
+        loadPlayers();
+    </script>
+</body>
+</html>

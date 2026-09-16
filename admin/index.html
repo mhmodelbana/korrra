@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KoraMatch | لوحة تحكم الأدمن</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#ecfdf5',
+                            100: '#d1fae5',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                            800: '#065f46',
+                            900: '#064e3b',
+                            neon: '#00ff87'
+                        },
+                        dark: {
+                            base: '#0b0f17',
+                            card: '#131b29',
+                            border: '#1f293d',
+                            hover: '#1a2436'
+                        }
+                    },
+                    fontFamily: {
+                        cairo: ['Cairo', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body class="min-h-screen bg-dark-base">
+    <!-- Navigation Bar -->
+    <header class="sticky top-0 z-40 glass-panel border-b border-dark-border">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+            <!-- Logo -->
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-brand-600 to-brand-neon flex items-center justify-center text-black font-black text-2xl shadow-lg shadow-brand-500/20">
+                    <i class="fa-solid fa-futbol"></i>
+                </div>
+                <div>
+                    <span class="text-2xl font-black tracking-wider text-white">ملعبنا<span class="text-brand-500">.</span></span>
+                    <p class="text-xs text-gray-400 font-medium hidden sm:block">لوحة تحكم الأدمن</p>
+                </div>
+            </div>
+
+            <!-- Admin Menu -->
+            <div class="flex items-center gap-3">
+                <a href="matches.html" class="bg-dark-card hover:bg-dark-hover border border-dark-border text-white px-4 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2">
+                    <i class="fa-solid fa-calendar-days text-brand-500"></i>
+                    <span>المباريات</span>
+                </a>
+                <a href="requests.html" class="bg-dark-card hover:bg-dark-hover border border-dark-border text-white px-4 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2">
+                    <i class="fa-solid fa-user-check text-brand-500"></i>
+                    <span>الطلبات</span>
+                </a>
+                <a href="players.html" class="bg-dark-card hover:bg-dark-hover border border-dark-border text-white px-4 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2">
+                    <i class="fa-solid fa-users text-brand-500"></i>
+                    <span>اللاعبين</span>
+                </a>
+                <a href="payments.html" class="bg-dark-card hover:bg-dark-hover border border-dark-border text-white px-4 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2">
+                    <i class="fa-solid fa-money-bill-wave text-brand-500"></i>
+                    <span>المدفوعات</span>
+                </a>
+                <button id="logout-btn" class="bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-400 px-4 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2">
+                    <i class="fa-solid fa-sign-out-alt"></i>
+                    <span>تسجيل الخروج</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <!-- Welcome Section -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-black text-white mb-2">لوحة تحكم الأدمن</h1>
+            <p class="text-gray-400">إحصائيات ونظرة عامة على النظام</p>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="glass-panel rounded-2xl p-6 border border-dark-border">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 rounded-xl bg-brand-500/20 text-brand-500 flex items-center justify-center">
+                        <i class="fa-solid fa-calendar-days text-xl"></i>
+                    </div>
+                    <span class="text-3xl font-black text-white" id="total-matches">0</span>
+                </div>
+                <h3 class="text-sm font-bold text-gray-300">إجمالي المباريات</h3>
+            </div>
+
+            <div class="glass-panel rounded-2xl p-6 border border-dark-border">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 rounded-xl bg-blue-500/20 text-blue-500 flex items-center justify-center">
+                        <i class="fa-solid fa-users text-xl"></i>
+                    </div>
+                    <span class="text-3xl font-black text-white" id="total-players">0</span>
+                </div>
+                <h3 class="text-sm font-bold text-gray-300">إجمالي اللاعبين</h3>
+            </div>
+
+            <div class="glass-panel rounded-2xl p-6 border border-dark-border">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 rounded-xl bg-yellow-500/20 text-yellow-500 flex items-center justify-center">
+                        <i class="fa-solid fa-hourglass-half text-xl"></i>
+                    </div>
+                    <span class="text-3xl font-black text-white" id="pending-requests">0</span>
+                </div>
+                <h3 class="text-sm font-bold text-gray-300">الطلبات المعلقة</h3>
+            </div>
+
+            <div class="glass-panel rounded-2xl p-6 border border-dark-border">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 rounded-xl bg-green-500/20 text-green-500 flex items-center justify-center">
+                        <i class="fa-solid fa-money-bill-wave text-xl"></i>
+                    </div>
+                    <span class="text-3xl font-black text-brand-500" id="total-revenue">0</span>
+                </div>
+                <h3 class="text-sm font-bold text-gray-300">إجمالي الإيرادات (ج.م)</h3>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="glass-panel rounded-2xl p-6 border border-dark-border">
+                <h2 class="text-xl font-black text-white mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-bolt text-brand-500"></i>
+                    <span>إجراءات سريعة</span>
+                </h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <a href="matches.html" class="bg-brand-500 hover:bg-brand-400 text-black font-extrabold py-4 rounded-xl text-sm transition flex items-center justify-center gap-2 shadow-lg shadow-brand-500/20">
+                        <i class="fa-solid fa-plus-circle"></i>
+                        <span>إضافة مباراة</span>
+                    </a>
+                    <a href="requests.html" class="bg-dark-card hover:bg-dark-hover border border-dark-border text-white font-bold py-4 rounded-xl text-sm transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-user-check"></i>
+                        <span>مراجعة الطلبات</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="glass-panel rounded-2xl p-6 border border-dark-border">
+                <h2 class="text-xl font-black text-white mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-chart-line text-brand-500"></i>
+                    <span>المباريات القادمة</span>
+                </h2>
+                <div id="upcoming-matches" class="space-y-3">
+                    <!-- Dynamic content -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script type="module">
+        import { Auth } from '../js/auth.js';
+        import { MatchService } from '../js/services/match-service.js';
+        import { RequestService } from '../js/services/request-service.js';
+        import { ProfileService } from '../js/services/profile-service.js';
+        import { PaymentService } from '../js/services/payment-service.js';
+        import { UI } from '../js/ui.js';
+
+        // Initialize auth
+        Auth.init();
+
+        // Load admin dashboard
+        async function loadDashboard() {
+            try {
+                await Auth.requireAdmin();
+                
+                UI.showLoading('upcoming-matches', 'جاري تحميل البيانات...');
+                
+                // Load stats
+                const matches = await MatchService.getAllMatches();
+                const players = await ProfileService.getAllProfiles();
+                const allRequests = await RequestService.getAllRequests();
+                const payments = await PaymentService.getAllPayments();
+
+                const pendingRequests = allRequests.filter(r => r.status === 'pending').length;
+                const totalRevenue = payments.filter(p => p.status === 'paid').reduce((sum, p) => sum + p.amount, 0);
+
+                document.getElementById('total-matches').textContent = matches.length;
+                document.getElementById('total-players').textContent = players.length;
+                document.getElementById('pending-requests').textContent = pendingRequests;
+                document.getElementById('total-revenue').textContent = totalRevenue;
+
+                // Render upcoming matches
+                const upcomingContainer = document.getElementById('upcoming-matches');
+                const upcomingMatches = matches.slice(0, 5);
+                
+                if (upcomingMatches.length === 0) {
+                    UI.showEmpty('upcoming-matches', 'لا توجد مباريات قادمة');
+                } else {
+                    upcomingContainer.innerHTML = upcomingMatches.map(match => `
+                        <div class="p-4 rounded-xl bg-dark-base border border-dark-border flex items-center justify-between gap-3">
+                            <div>
+                                <h4 class="font-bold text-white text-sm">${match.title}</h4>
+                                <span class="text-xs text-gray-400">${match.match_date} (${match.start_time})</span>
+                            </div>
+                            <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-brand-500/20 text-brand-500 border border-brand-500/30">
+                                ${match.max_players} لاعب
+                            </span>
+                        </div>
+                    `).join('');
+                }
+
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+                UI.showToast('حدث خطأ أثناء تحميل البيانات', 'error');
+            }
+        }
+
+        // Logout handler
+        document.getElementById('logout-btn').addEventListener('click', async () => {
+            await Auth.signOut();
+        });
+
+        // Load dashboard on page load
+        loadDashboard();
+    </script>
+</body>
+</html>
