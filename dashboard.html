@@ -569,58 +569,64 @@ async function loadDashboard() {
 
 
         // =========================
-        // Total Due
-        // =========================
+// Total Due
+// =========================
 
-        let totalDue = 0;
+let totalDue = 0;
 
+// نجيب كل لاعبي المباريات لمعرفة العدد الفعلي للمقبولين
+const allMatchPlayers =
+    await RequestService.getAllMatchPlayers();
 
-        approvedRequests.forEach(request => {
+// نجمع عدد اللاعبين المقبولين لكل مباراة
+const approvedCountByMatch = {};
 
-            if (!request.matches) {
-                return;
-            }
+allMatchPlayers.forEach(player => {
 
+    if (player.status !== 'approved') {
+        return;
+    }
 
-            const matchCost =
-                Number(request.matches.total_cost || 0);
+    if (!approvedCountByMatch[player.match_id]) {
+        approvedCountByMatch[player.match_id] = 0;
+    }
 
+    approvedCountByMatch[player.match_id]++;
 
-            const maxPlayers =
-                Number(request.matches.max_players || 0);
+});
 
+approvedRequests.forEach(request => {
 
-            if (matchCost <= 0) {
-                return;
-            }
+    if (!request.matches) {
+        return;
+    }
 
+    const matchCost =
+        Number(request.matches.total_cost || 0);
 
-            /*
-             * حاليًا هنحسب حصة اللاعب بناءً على الحد الأقصى
-             * لو المباراة لسه مفيهاش عدد نهائي.
-             *
-             * الحساب النهائي يفضل يظهر في صفحة المباراة
-             * بعد اكتمال اللاعبين.
-             */
+    if (matchCost <= 0) {
+        return;
+    }
 
-            const share =
-                maxPlayers > 0
-                    ? MatchService.calculatePlayerShare(
-                        matchCost,
-                        maxPlayers
-                    )
-                    : matchCost;
+    const approvedCount =
+        approvedCountByMatch[request.match_id] || 0;
 
+    const share =
+        approvedCount > 0
+            ? MatchService.calculatePlayerShare(
+                matchCost,
+                approvedCount
+            )
+            : matchCost;
 
-            totalDue += share;
+    totalDue += share;
 
-        });
+});
 
-
-        document.getElementById(
-            'total-due'
-        ).textContent =
-            `${totalDue.toFixed(2)} ج.م`;
+document.getElementById(
+    'total-due'
+).textContent =
+    `${totalDue.toFixed(2)} ج.م`;
 
 
         // =========================
